@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multicloud-operators-deployable
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: multicloud-operators-deployable
+  template:
+    metadata:
+      labels:
+        name: multicloud-operators-deployable
+    spec:
+      serviceAccountName: multicloud-operators-deployable
+      containers:
+        - name: multicloud-operators-deployable
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - multicloud-operators-deployable
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "multicloud-operators-deployable"
