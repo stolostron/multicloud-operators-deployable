@@ -15,7 +15,17 @@
 package deployable
 
 import (
+	"context"
+	"os"
+	"reflect"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -35,12 +45,27 @@ import (
 // Add creates a new Deployable Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	reccs, err := kubernetes.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		klog.Error("Failed to new clientset for event recorder. err: ", err)
+		os.Exit(1)
+	}
+
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(klog.Infof)
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: reccs.CoreV1().Events("")})
+	recorder := eventBroadcaster.NewRecorder(mgr.GetScheme(), corev1.EventSource{Component: "deployable"})
+
+	return add(mgr, newReconciler(mgr, recorder))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileDeployable{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+func newReconciler(mgr manager.Manager, recorder record.EventRecorder) reconcile.Reconciler {
+	return &ReconcileDeployable{
+		Client:        mgr.GetClient(),
+		scheme:        mgr.GetScheme(),
+		eventRecorder: recorder,
+	}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -67,8 +92,10 @@ var _ reconcile.Reconciler = &ReconcileDeployable{}
 type ReconcileDeployable struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
+	client.Client
 	scheme *runtime.Scheme
+
+	eventRecorder record.EventRecorder
 }
 
 // Reconcile reads that state of the cluster for a Deployable object and makes changes based on the state read
@@ -76,7 +103,49 @@ type ReconcileDeployable struct {
 func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Deployable instance
 
-	klog.Info("Reconciling:", request.NamespacedName, " with Get err:", nil)
+	instance := &appv1alpha1.Deployable{}
+	err := r.Get(context.TODO(), request.NamespacedName, instance)
+	klog.Info("Reconciling:", request.NamespacedName, " with Get err:", err)
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
+		return reconcile.Result{}, err
+	}
+
+	savedStatus := instance.Status.DeepCopy()
+
+	// try if it is a hub deployable
+	err = r.handleDeployable(instance)
+	if err != nil {
+		instance.Status.Phase = appv1alpha1.DeployableFailed
+		instance.Status.PropagatedStatus = nil
+		instance.Status.Reason = err.Error()
+	} else {
+		instance.Status.Reason = ""
+		instance.Status.Message = ""
+	}
+
+	// reconcile finished check if need to upadte the resource
+	if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
+		if !reflect.DeepEqual(savedStatus, instance.Status) {
+			instance.Status.LastUpdateTime = metav1.Now()
+			klog.V(10).Info("Update status", instance.Status)
+			statuserr := r.Status().Update(context.TODO(), instance)
+			if statuserr != nil {
+				klog.Error("Error returned when updating status:", err, "instance:", instance)
+				return reconcile.Result{}, statuserr
+			}
+		}
+	}
+
+	klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
 
 	return reconcile.Result{}, nil
 }
