@@ -114,7 +114,6 @@ spec:
                     type: object
                 required:
                 - phase
-                - lastUpdateTime
                 type: object
               type: object
           type: object
