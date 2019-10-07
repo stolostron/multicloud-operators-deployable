@@ -3,9 +3,7 @@ module github.com/IBM/multicloud-operators-deployable
 require (
 	github.com/IBM/multicloud-operators-placementrule v0.0.0-20191003174149-8a43376c12cd
 	github.com/cameront/go-jsonpatch v0.0.0-20180223123257-a8710867776e
-	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/spec v0.19.0
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/onsi/gomega v1.4.3
 	github.com/operator-framework/operator-sdk v0.10.1-0.20191004014855-dc713e4d7890
 	github.com/prometheus/common v0.2.0

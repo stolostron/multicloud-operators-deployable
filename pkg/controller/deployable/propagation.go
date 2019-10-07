@@ -67,7 +67,6 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	// prepare map to delete expired children
 	expireddeployablemap := make(map[string]*appv1alpha1.Deployable)
 	for _, dpl := range children {
-		klog.Error("Processing child:", dpl)
 		expireddeployablemap[getDeployableTrueKey(dpl)] = dpl
 		if utils.GetClusterFromResourceObject(dpl).Name != "" {
 			instance.Status.PropagatedStatus[utils.GetClusterFromResourceObject(dpl).Name] = dpl.Status.ResourceUnitStatus.DeepCopy()

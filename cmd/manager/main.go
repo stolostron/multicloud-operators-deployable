@@ -26,8 +26,8 @@ import (
 
 	"github.com/prometheus/common/log"
 
-	"github.com/IBM/multicloud-operators-placementrule/pkg/apis"
-	"github.com/IBM/multicloud-operators-placementrule/pkg/controller"
+	"github.com/IBM/multicloud-operators-deployable/pkg/apis"
+	"github.com/IBM/multicloud-operators-deployable/pkg/controller"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
@@ -80,7 +80,7 @@ func main() {
 
 	ctx := context.TODO()
 	// Become the leader before proceeding
-	err = leader.Become(ctx, "multicloud-operators-placementrule-lock")
+	err = leader.Become(ctx, "multicloud-operators-deployable-lock")
 	if err != nil {
 		klog.Error(err, "")
 		os.Exit(1)
