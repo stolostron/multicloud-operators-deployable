@@ -114,7 +114,7 @@ type ResourceUnitStatus struct {
 	Phase          DeployablePhase `json:"phase"`
 	Reason         string          `json:"reason,omitempty"`
 	Message        string          `json:"message,omitempty"`
-	LastUpdateTime metav1.Time     `json:"lastUpdateTime"`
+	LastUpdateTime *metav1.Time    `json:"lastUpdateTime,omitempty"`
 
 	ResourceStatus *runtime.RawExtension `json:"resourceStatus,omitempty"`
 }

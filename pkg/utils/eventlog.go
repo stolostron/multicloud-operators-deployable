@@ -18,9 +18,13 @@ import (
 	"regexp"
 	"runtime"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/klog"
 )
 
 // QuiteLogLel - "important" information
@@ -53,13 +57,36 @@ func EnterFnString() string {
 // ExitFuString - called when exiting a function
 func ExitFuString(s string) {}
 
+// EventRecorder - record kubernetes event
+type EventRecorder struct {
+	record.EventRecorder
+}
+
+// NewEventRecorder - create new event recorder from rect config
+func NewEventRecorder(cfg *rest.Config, scheme *apiruntime.Scheme) (*EventRecorder, error) {
+	reccs, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		klog.Error("Failed to new clientset for event recorder. err: ", err)
+		return nil, err
+	}
+
+	rec := &EventRecorder{}
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(klog.Infof)
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: reccs.CoreV1().Events("")})
+
+	rec.EventRecorder = eventBroadcaster.NewRecorder(scheme, corev1.EventSource{Component: "deployable"})
+
+	return rec, nil
+}
+
 // RecordEvent - record kuberentes event
-func RecordEvent(eventrecorder record.EventRecorder, obj apiruntime.Object, reason, msg string, err error) {
-	eventType := v1.EventTypeNormal
+func (rec *EventRecorder) RecordEvent(eventrecorder record.EventRecorder, obj apiruntime.Object, reason, msg string, err error) {
+	eventType := corev1.EventTypeNormal
 	evnetMsg := msg
 
 	if err != nil {
-		eventType = v1.EventTypeWarning
+		eventType = corev1.EventTypeWarning
 	}
 
 	eventrecorder.Event(obj, eventType, reason, evnetMsg)

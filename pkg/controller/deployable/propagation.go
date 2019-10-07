@@ -51,7 +51,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 					err = r.Delete(context.TODO(), dpl)
 
 					addtionalMsg := "Delete propogated Deployable " + dplkey.String()
-					utils.RecordEvent(r.eventRecorder, instance, "Delete", addtionalMsg, err)
+					r.eventRecorder.RecordEvent(r.eventRecorder, instance, "Delete", addtionalMsg, err)
 				}
 			}
 		}
@@ -67,6 +67,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	// prepare map to delete expired children
 	expireddeployablemap := make(map[string]*appv1alpha1.Deployable)
 	for _, dpl := range children {
+		klog.Error("Processing child:", dpl)
 		expireddeployablemap[getDeployableTrueKey(dpl)] = dpl
 		if utils.GetClusterFromResourceObject(dpl).Name != "" {
 			instance.Status.PropagatedStatus[utils.GetClusterFromResourceObject(dpl).Name] = dpl.Status.ResourceUnitStatus.DeepCopy()
@@ -108,7 +109,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 		err = r.Delete(context.TODO(), dpl)
 
 		addtionalMsg := "Delete Expired Deployable " + dplkey.String()
-		utils.RecordEvent(r.eventRecorder, instance, "Delete", addtionalMsg, err)
+		r.eventRecorder.RecordEvent(r.eventRecorder, instance, "Delete", addtionalMsg, err)
 
 		if err != nil {
 			klog.Error("Failed to delete local deployable ", dpl.GetNamespace(), "/", dpl.GetName(), ":", err, "skipping")

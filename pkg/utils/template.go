@@ -339,7 +339,8 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 		}
 	}
 
-	dpl.Status.LastUpdateTime = metav1.Now()
+	now := metav1.Now()
+	dpl.Status.LastUpdateTime = &now
 	err = statusClient.Status().Update(context.Background(), dpl)
 	// want to print out the error log before leave
 	if err != nil {

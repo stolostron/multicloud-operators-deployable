@@ -16,25 +16,26 @@ package deployable
 
 import (
 	"context"
-	"os"
+	"encoding/json"
 	"reflect"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
-	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
+	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
 )
 
 /**
@@ -45,26 +46,17 @@ import (
 // Add creates a new Deployable Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	reccs, err := kubernetes.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		klog.Error("Failed to new clientset for event recorder. err: ", err)
-		os.Exit(1)
-	}
-
-	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(klog.Infof)
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: reccs.CoreV1().Events("")})
-	recorder := eventBroadcaster.NewRecorder(mgr.GetScheme(), corev1.EventSource{Component: "deployable"})
-
-	return add(mgr, newReconciler(mgr, recorder))
+	return add(mgr, newReconciler(mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, recorder record.EventRecorder) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	erecorder, _ := utils.NewEventRecorder(mgr.GetConfig(), mgr.GetScheme())
+
 	return &ReconcileDeployable{
 		Client:        mgr.GetClient(),
 		scheme:        mgr.GetScheme(),
-		eventRecorder: recorder,
+		eventRecorder: erecorder,
 	}
 }
 
@@ -77,12 +69,127 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource Deployable
-	err = c.Watch(&source.Kind{Type: &appv1alpha1.Deployable{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(
+		&source.Kind{Type: &appv1alpha1.Deployable{}},
+		&handler.EnqueueRequestsFromMapFunc{ToRequests: &deployableMapper{mgr.GetClient()}},
+		predicate.Funcs{
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				newdpl := e.ObjectNew.(*appv1alpha1.Deployable)
+				olddpl := e.ObjectOld.(*appv1alpha1.Deployable)
+
+				if len(newdpl.GetFinalizers()) > 0 {
+					return true
+				}
+
+				hosting := utils.GetHostDeployableFromObject(newdpl)
+				if hosting != nil {
+					// reconcile its parent for status
+					return true
+				}
+
+				if !reflect.DeepEqual(newdpl.GetAnnotations(), olddpl.GetAnnotations()) {
+					return true
+				}
+
+				if !reflect.DeepEqual(newdpl.GetLabels(), olddpl.GetLabels()) {
+					return true
+				}
+
+				oldtmpl := &unstructured.Unstructured{}
+				newtmpl := &unstructured.Unstructured{}
+
+				if olddpl.Spec.Template == nil || olddpl.Spec.Template.Raw == nil {
+					return true
+				}
+				err = json.Unmarshal(olddpl.Spec.Template.Raw, oldtmpl)
+				if err != nil {
+					return true
+				}
+				if newdpl.Spec.Template.Raw == nil {
+					return true
+				}
+				err = json.Unmarshal(newdpl.Spec.Template.Raw, newtmpl)
+				if err != nil {
+					return true
+				}
+
+				if !reflect.DeepEqual(newtmpl, oldtmpl) {
+					return true
+				}
+
+				olddpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
+				return !reflect.DeepEqual(olddpl.Spec, newdpl.Spec)
+			},
+		})
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+type deployableMapper struct {
+	client.Client
+}
+
+func (mapper *deployableMapper) Map(obj handler.MapObject) []reconcile.Request {
+	if klog.V(utils.QuiteLogLel) {
+		fnName := utils.GetFnName()
+		klog.Infof("Entering: %v()", fnName)
+		defer klog.Infof("Exiting: %v()", fnName)
+	}
+
+	// rolling target deployable changed, need to update the rolling deployable
+	var requests []reconcile.Request
+
+	// enqueue itself
+	requests = append(requests,
+		reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      obj.Meta.GetName(),
+				Namespace: obj.Meta.GetNamespace(),
+			},
+		},
+	)
+
+	// list thing for rolling update check
+	dplList := &appv1alpha1.DeployableList{}
+	listopts := &client.ListOptions{Namespace: obj.Meta.GetNamespace()}
+	err := mapper.List(context.TODO(), listopts, dplList)
+	if err != nil {
+		klog.Error("Listing deployables in mapper and got error:", err)
+	}
+
+	for _, dpl := range dplList.Items {
+		annotations := dpl.GetAnnotations()
+		if annotations == nil || annotations[appv1alpha1.AnnotationRollingUpdateTarget] == "" {
+			// not rolling
+			continue
+		}
+
+		if annotations[appv1alpha1.AnnotationRollingUpdateTarget] != obj.Meta.GetName() {
+			// rolling to annother one, skipping
+			continue
+		}
+
+		// rolling target deployable changed, need to update the rolling deployable
+		objkey := types.NamespacedName{
+			Name:      dpl.GetName(),
+			Namespace: dpl.GetNamespace(),
+		}
+		requests = append(requests, reconcile.Request{NamespacedName: objkey})
+	}
+	// end of rolling update check
+
+	// reconcile hosting one, if there is change in cluster, assuming no 2-hop hosting
+	hdplkey := utils.GetHostDeployableFromObject(obj.Meta)
+	if hdplkey != nil && hdplkey.Name != "" {
+		requests = append(requests, reconcile.Request{NamespacedName: *hdplkey})
+	}
+
+	klog.V(10).Info("Out deployable mapper with requests:", requests)
+
+	return requests
 }
 
 // blank assignment to verify that ReconcileDeployable implements reconcile.Reconciler
@@ -95,7 +202,7 @@ type ReconcileDeployable struct {
 	client.Client
 	scheme *runtime.Scheme
 
-	eventRecorder record.EventRecorder
+	eventRecorder *utils.EventRecorder
 }
 
 // Reconcile reads that state of the cluster for a Deployable object and makes changes based on the state read
@@ -135,12 +242,13 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 	// reconcile finished check if need to upadte the resource
 	if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
 		if !reflect.DeepEqual(savedStatus, instance.Status) {
-			instance.Status.LastUpdateTime = metav1.Now()
+			now := metav1.Now()
+			instance.Status.LastUpdateTime = &now
 			klog.V(10).Info("Update status", instance.Status)
-			statuserr := r.Status().Update(context.TODO(), instance)
-			if statuserr != nil {
+			err = r.Status().Update(context.TODO(), instance)
+			if err != nil {
 				klog.Error("Error returned when updating status:", err, "instance:", instance)
-				return reconcile.Result{}, statuserr
+				return reconcile.Result{}, err
 			}
 		}
 	}
