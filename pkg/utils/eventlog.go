@@ -46,6 +46,7 @@ func GetFnName() string {
 	if ok {
 		fnName = regexStripFnPreamble.ReplaceAllString(runtime.FuncForPC(pc).Name(), "$1")
 	}
+
 	return fnName
 }
 
@@ -65,6 +66,7 @@ type EventRecorder struct {
 // NewEventRecorder - create new event recorder from rect config
 func NewEventRecorder(cfg *rest.Config, scheme *apiruntime.Scheme) (*EventRecorder, error) {
 	reccs, err := kubernetes.NewForConfig(cfg)
+
 	if err != nil {
 		klog.Error("Failed to new clientset for event recorder. err: ", err)
 		return nil, err

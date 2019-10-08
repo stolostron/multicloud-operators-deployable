@@ -106,6 +106,7 @@ func TestReconcile(t *testing.T) {
 	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
 
 	stopMgr, mgrStopped := StartTestManager(mgr, g)
+
 	defer func() {
 		close(stopMgr)
 		mgrStopped.Wait()
@@ -124,9 +125,11 @@ func TestReconcile(t *testing.T) {
 	}
 	err = c.Create(context.TODO(), instance)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
+
 	defer c.Delete(context.TODO(), instance)
 
 	var expectedRequest = reconcile.Request{NamespacedName: dplkey}
+
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 }
 
@@ -147,6 +150,7 @@ func TestPropagate(t *testing.T) {
 	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
 
 	stopMgr, mgrStopped := StartTestManager(mgr, g)
+
 	defer func() {
 		close(stopMgr)
 		mgrStopped.Wait()
@@ -184,11 +188,14 @@ func TestPropagate(t *testing.T) {
 			},
 		},
 	}
+
 	err = c.Create(context.TODO(), instance)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
+
 	defer c.Delete(context.TODO(), instance)
 
 	var expectedRequest = reconcile.Request{NamespacedName: dplkey}
+
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 
 	dpllist := &appv1alpha1.DeployableList{}
@@ -202,6 +209,7 @@ func TestPropagate(t *testing.T) {
 	if len(dpllist.Items) == 1 {
 		dpl := dpllist.Items[0]
 		expgenname := instance.GetName() + "-"
+
 		if dpl.GetGenerateName() != expgenname {
 			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
 		}

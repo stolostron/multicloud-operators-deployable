@@ -33,11 +33,14 @@ func (r *ReconcileDeployable) propagateDeployables(clusters []types.NamespacedNa
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	var err error
 	// generate the deploaybles
 	hosting := types.NamespacedName{Name: instance.GetName(), Namespace: instance.GetNamespace()}
+
 	for _, cluster := range clusters {
 		familymap, err = r.createManagedDeployable(cluster, hosting, instance, familymap)
 		if err != nil {
@@ -45,6 +48,7 @@ func (r *ReconcileDeployable) propagateDeployables(clusters []types.NamespacedNa
 			return familymap, err
 		}
 	}
+
 	return familymap, nil
 }
 
@@ -53,8 +57,10 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	var err error
 
 	namespace := cluster.Namespace
@@ -70,10 +76,11 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 	if !ok {
 		existingdeployable = &appv1alpha1.Deployable{}
 	}
+
 	original := existingdeployable.DeepCopy()
 	existingdeployable = r.setLocalDeployable(&cluster, hosting, instance, existingdeployable)
-
 	ifRecordEvent := false
+
 	if !ok {
 		klog.V(10).Info("Creating new local deployable:", existingdeployable)
 		err = r.Create(context.TODO(), existingdeployable)
@@ -81,6 +88,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 		if instance.Status.PropagatedStatus == nil {
 			instance.Status.PropagatedStatus = make(map[string]*appv1alpha1.ResourceUnitStatus)
 		}
+
 		instance.Status.PropagatedStatus[cluster.Name] = &appv1alpha1.ResourceUnitStatus{}
 		ifRecordEvent = true
 	} else {
@@ -125,6 +133,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 	if err != nil {
 		// return error is something is wrong
 		klog.Error("Failed in processing local deployable with error:", err)
+
 		return nil, err
 	}
 
@@ -140,8 +149,10 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	localdeployable.SetGenerateName(instance.GetName() + "-")
 	localdeployable.SetNamespace(cluster.Namespace)
 
@@ -162,21 +173,26 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	localAnnotations[appv1alpha1.AnnotationLocal] = "true"
 	localAnnotations[appv1alpha1.AnnotationManagedCluster] = cluster.String()
 	localAnnotations[appv1alpha1.AnnotationIsGenerated] = "true"
-
 	realhosting := &hosting
+
 	if localAnnotations[appv1alpha1.AnnotationShared] == "true" {
 		realhosting = &types.NamespacedName{Name: instance.GetName(), Namespace: instance.GetNamespace()}
 	}
+
 	localAnnotations[appv1alpha1.AnnotationHosting] = realhosting.String()
+
 	localdeployable.SetAnnotations(localAnnotations)
 
 	localLabels := localdeployable.GetLabels()
+
 	if localLabels == nil {
 		localLabels = make(map[string]string)
 	}
+
 	for k, v := range instance.GetLabels() {
 		localLabels[k] = v
 	}
+
 	localLabels[appv1alpha1.PropertyHostingDeployableName] = realhosting.Name
 	localdeployable.SetLabels(localLabels)
 
@@ -184,6 +200,7 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	if covs != nil {
 		tplobj := &unstructured.Unstructured{}
 		err := json.Unmarshal(localdeployable.Spec.Template.Raw, tplobj)
+
 		if err != nil {
 			klog.Info("Error in unmarshall template ", string(localdeployable.Spec.Template.Raw))
 			return localdeployable

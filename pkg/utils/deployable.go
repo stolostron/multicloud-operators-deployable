@@ -90,6 +90,7 @@ func PrepareInstance(instance *appv1alpha1.Deployable) bool {
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -107,6 +108,7 @@ func PrepareInstance(instance *appv1alpha1.Deployable) bool {
 	if annotations[appv1alpha1.AnnotationManagedCluster] == "" {
 		annotations[appv1alpha1.AnnotationManagedCluster] = client.ObjectKey{}.String()
 	}
+
 	instance.SetAnnotations(annotations)
 
 	updated := !reflect.DeepEqual(original.GetAnnotations(), instance.GetAnnotations()) || !reflect.DeepEqual(original.GetLabels(), instance.GetLabels())
@@ -115,6 +117,7 @@ func PrepareInstance(instance *appv1alpha1.Deployable) bool {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
+
 	instance.SetLabels(labels)
 
 	return updated
@@ -125,20 +128,25 @@ func GetUnstructuredTemplateFromDeployable(instance *appv1alpha1.Deployable) (*u
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
 	template := &unstructured.Unstructured{}
+
 	if instance.Spec.Template == nil {
 		return nil, errors.New("Processing local deployable without template:" + instance.GetName())
 	}
 
 	err := json.Unmarshal(instance.Spec.Template.Raw, template)
 	klog.V(10).Info("Processing Local with template:", template)
+
 	if err != nil {
 		klog.Error("Failed to unmashal template with error: ", err)
+
 		return nil, err
 	}
+
 	if template.GetKind() == "" {
 		return nil, errors.New("Failed to update template with empty kind. gvk:" + template.GetObjectKind().GroupVersionKind().String())
 	}
@@ -151,6 +159,7 @@ func GetClusterFromResourceObject(obj metav1.Object) *types.NamespacedName {
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -159,6 +168,7 @@ func GetClusterFromResourceObject(obj metav1.Object) *types.NamespacedName {
 	}
 
 	annotations := obj.GetAnnotations()
+
 	if annotations == nil {
 		return nil
 	}
@@ -170,6 +180,7 @@ func GetClusterFromResourceObject(obj metav1.Object) *types.NamespacedName {
 	}
 
 	parsedstr := strings.Split(clstr, "/")
+
 	if len(parsedstr) != 2 {
 		return nil
 	}
@@ -184,6 +195,7 @@ func GetHostDeployableFromObject(obj metav1.Object) *types.NamespacedName {
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -192,6 +204,7 @@ func GetHostDeployableFromObject(obj metav1.Object) *types.NamespacedName {
 	}
 
 	annotations := obj.GetAnnotations()
+
 	if annotations == nil {
 		return nil
 	}
@@ -203,6 +216,7 @@ func GetHostDeployableFromObject(obj metav1.Object) *types.NamespacedName {
 	}
 
 	parsedstr := strings.Split(hosttr, "/")
+
 	if len(parsedstr) != 2 {
 		return nil
 	}
@@ -217,38 +231,46 @@ func IsDependencyDeployable(instance *appv1alpha1.Deployable) bool {
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	if instance == nil {
 		return false
 	}
 
 	annotations := instance.GetAnnotations()
+
 	if annotations == nil {
 		return false
 	}
 
 	hosttr := annotations[appv1alpha1.AnnotationHosting]
+
 	if hosttr == "" {
 		return false
 	}
 
 	parsedstr := strings.Split(hosttr, "/")
+
 	if len(parsedstr) != 2 {
 		return false
 	}
 
 	hostDeployable := parsedstr[1]
+
 	if hostDeployable == "" {
 		return false
 	}
 
 	genHhostDeployable := strings.TrimSuffix(instance.GetGenerateName(), "-")
+
 	if genHhostDeployable == "" {
 		return false
 	}
 
 	klog.V(10).Info("hostDeployable:", hostDeployable, ", genHhostDeployable:", genHhostDeployable)
+
 	return hostDeployable != genHhostDeployable
 }
 
@@ -259,14 +281,19 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	dpl := &appv1alpha1.Deployable{}
 	host := GetHostDeployableFromObject(tplunit)
+
 	if host == nil {
 		klog.Info("Failed to find hosting deployable for ", tplunit)
 	}
+
 	err := statusClient.Get(context.TODO(), *host, dpl)
+
 	if err != nil {
 		// for all errors including not found return
 		return err
@@ -287,7 +314,9 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 		if dpl.Status.ResourceStatus == nil {
 			dpl.Status.ResourceStatus = &runtime.RawExtension{}
 		}
+
 		dpl.Status.ResourceStatus.Raw, err = json.Marshal(status)
+
 		if err != nil {
 			klog.Info("Failed to mashall status for ", host, status, " with err:", err)
 		}
@@ -300,6 +329,7 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 	if err != nil {
 		klog.Error("Failed to update status of deployable ", dpl)
 	}
+
 	return err
 }
 
@@ -310,5 +340,6 @@ func ContainsName(a []types.NamespacedName, x string) bool {
 			return true
 		}
 	}
+
 	return false
 }
