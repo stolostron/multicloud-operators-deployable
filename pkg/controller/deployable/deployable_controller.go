@@ -16,14 +16,14 @@ package deployable
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -36,6 +36,8 @@ import (
 
 	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
 	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
+	placementv1alpha1 "github.com/IBM/multicloud-operators-placementrule/pkg/apis/app/v1alpha1"
+	placementutils "github.com/IBM/multicloud-operators-placementrule/pkg/utils"
 )
 
 /**
@@ -52,12 +54,125 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	erecorder, _ := utils.NewEventRecorder(mgr.GetConfig(), mgr.GetScheme())
+	authClient := kubernetes.NewForConfigOrDie(mgr.GetConfig())
 
 	return &ReconcileDeployable{
 		Client:        mgr.GetClient(),
 		scheme:        mgr.GetScheme(),
+		authClient:    authClient,
 		eventRecorder: erecorder,
 	}
+}
+
+type placementruleMapper struct {
+	client.Client
+}
+
+func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Request {
+	if klog.V(utils.QuiteLogLel) {
+		fnName := utils.GetFnName()
+		klog.Infof("Entering: %v()", fnName)
+		defer klog.Infof("Exiting: %v()", fnName)
+	}
+
+	cname := obj.Meta.GetName()
+	klog.V(10).Info("In placement Mapper:", cname)
+
+	var requests []reconcile.Request
+
+	dplList := &appv1alpha1.DeployableList{}
+	listopts := &client.ListOptions{}
+	err := mapper.List(context.TODO(), listopts, dplList)
+	if err != nil {
+		klog.Error("Failed to list deployables for placementrule mapper with error:", err)
+		return requests
+	}
+
+	for _, dpl := range dplList.Items {
+		if dpl.Spec.Placement == nil || dpl.Spec.Placement.PlacementRef == nil || dpl.Spec.Placement.PlacementRef.Name != obj.Meta.GetName() {
+			continue
+		}
+
+		annotations := dpl.GetAnnotations()
+		if annotations == nil || annotations[appv1alpha1.AnnotationManagedCluster] == "" {
+			continue
+		}
+
+		if annotations[appv1alpha1.AnnotationManagedCluster] != (types.NamespacedName{}).String() {
+			continue
+		}
+
+		// only reconcile it's own object
+		objkey := types.NamespacedName{
+			Name:      dpl.GetName(),
+			Namespace: dpl.GetNamespace(),
+		}
+		requests = append(requests, reconcile.Request{NamespacedName: objkey})
+	}
+
+	return requests
+}
+
+type clusterMapper struct {
+	client.Client
+}
+
+func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
+	if klog.V(utils.QuiteLogLel) {
+		fnName := utils.GetFnName()
+		klog.Infof("Entering: %v()", fnName)
+		defer klog.Infof("Exiting: %v()", fnName)
+	}
+
+	cname := obj.Meta.GetName()
+	klog.V(10).Info("In cluster Mapper for ", cname)
+
+	var requests []reconcile.Request
+
+	dplList := &appv1alpha1.DeployableList{}
+
+	listopts := &client.ListOptions{}
+	err := mapper.List(context.TODO(), listopts, dplList)
+	if err != nil {
+		klog.Error("Failed to list deployables for cluster mapper with error:", err)
+		return requests
+	}
+
+	for _, dpl := range dplList.Items {
+		// only reconcile with when placement is set and not using ref
+		if dpl.Spec.Placement == nil || dpl.Spec.Placement.PlacementRef == nil {
+			continue
+		}
+
+		if dpl.Spec.Placement.ClusterSelector == nil {
+			matched := false
+			for _, cn := range dpl.Spec.Placement.Clusters {
+				if cn.Name == cname {
+					matched = true
+				}
+			}
+			if !matched {
+				continue
+			}
+		}
+		// only reconcile it's own object
+		annotations := dpl.GetAnnotations()
+		if annotations == nil || annotations[appv1alpha1.AnnotationManagedCluster] == "" {
+			continue
+		}
+
+		if annotations[appv1alpha1.AnnotationManagedCluster] != (types.NamespacedName{}).String() {
+			continue
+		}
+
+		objkey := types.NamespacedName{
+			Name:      dpl.GetName(),
+			Namespace: dpl.GetNamespace(),
+		}
+		requests = append(requests, reconcile.Request{NamespacedName: objkey})
+	}
+
+	return requests
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -71,56 +186,31 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to primary resource Deployable
 	err = c.Watch(
 		&source.Kind{Type: &appv1alpha1.Deployable{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: &deployableMapper{mgr.GetClient()}},
+		&handler.EnqueueRequestsFromMapFunc{ToRequests: &deployableMapper{mgr.GetClient()}}, utils.DeployablePredicateFunc)
+	if err != nil {
+		return err
+	}
+
+	// watch for placementrule changes
+	err = c.Watch(&source.Kind{Type: &placementv1alpha1.PlacementRule{}}, &handler.EnqueueRequestsFromMapFunc{ToRequests: &placementruleMapper{mgr.GetClient()}},
 		predicate.Funcs{
 			UpdateFunc: func(e event.UpdateEvent) bool {
-				newdpl := e.ObjectNew.(*appv1alpha1.Deployable)
-				olddpl := e.ObjectOld.(*appv1alpha1.Deployable)
+				newpr := e.ObjectNew.(*placementv1alpha1.PlacementRule)
+				oldpr := e.ObjectOld.(*placementv1alpha1.PlacementRule)
 
-				if len(newdpl.GetFinalizers()) > 0 {
-					return true
-				}
-
-				hosting := utils.GetHostDeployableFromObject(newdpl)
-				if hosting != nil {
-					// reconcile its parent for status
-					return true
-				}
-
-				if !reflect.DeepEqual(newdpl.GetAnnotations(), olddpl.GetAnnotations()) {
-					return true
-				}
-
-				if !reflect.DeepEqual(newdpl.GetLabels(), olddpl.GetLabels()) {
-					return true
-				}
-
-				oldtmpl := &unstructured.Unstructured{}
-				newtmpl := &unstructured.Unstructured{}
-
-				if olddpl.Spec.Template == nil || olddpl.Spec.Template.Raw == nil {
-					return true
-				}
-				err = json.Unmarshal(olddpl.Spec.Template.Raw, oldtmpl)
-				if err != nil {
-					return true
-				}
-				if newdpl.Spec.Template.Raw == nil {
-					return true
-				}
-				err = json.Unmarshal(newdpl.Spec.Template.Raw, newtmpl)
-				if err != nil {
-					return true
-				}
-
-				if !reflect.DeepEqual(newtmpl, oldtmpl) {
-					return true
-				}
-
-				olddpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
-				return !reflect.DeepEqual(olddpl.Spec, newdpl.Spec)
+				return !reflect.DeepEqual(newpr.Status, oldpr.Status)
 			},
 		})
+	if err != nil {
+		return err
+	}
+
+	// watch for cluster change excluding heartbeat
+	err = c.Watch(
+		&source.Kind{Type: &clusterv1alpha1.Cluster{}},
+		&handler.EnqueueRequestsFromMapFunc{ToRequests: &clusterMapper{mgr.GetClient()}},
+		placementutils.ClusterPredicateFunc,
+	)
 	if err != nil {
 		return err
 	}
@@ -200,7 +290,8 @@ type ReconcileDeployable struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client.Client
-	scheme *runtime.Scheme
+	authClient kubernetes.Interface
+	scheme     *runtime.Scheme
 
 	eventRecorder *utils.EventRecorder
 }

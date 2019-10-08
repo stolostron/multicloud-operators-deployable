@@ -18,80 +18,71 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"reflect"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
 )
 
-// IsResourceOwnedByCluster checks if the deployable belongs to this controller by AnnotationManagedCluster
-// only the managed cluster annotation matches
-func IsResourceOwnedByCluster(obj metav1.Object, cluster types.NamespacedName) bool {
-	if obj == nil {
-		return false
-	}
+// DeployablePredicateFunc defines predicate function for deployable watch in deployable controller
+var DeployablePredicateFunc = predicate.Funcs{
+	UpdateFunc: func(e event.UpdateEvent) bool {
+		newdpl := e.ObjectNew.(*appv1alpha1.Deployable)
+		olddpl := e.ObjectOld.(*appv1alpha1.Deployable)
 
-	annotations := obj.GetAnnotations()
+		if len(newdpl.GetFinalizers()) > 0 {
+			return true
+		}
 
-	if annotations == nil {
-		return false
-	}
+		hosting := GetHostDeployableFromObject(newdpl)
+		if hosting != nil {
+			// reconcile its parent for status
+			return true
+		}
 
-	if annotations[appv1alpha1.AnnotationManagedCluster] == cluster.String() {
-		return true
-	}
-	return false
-}
+		if !reflect.DeepEqual(newdpl.GetAnnotations(), olddpl.GetAnnotations()) {
+			return true
+		}
 
-// IsResourceHostedByDeployable checks if the deployable belongs to this controller by AnnotationManagedCluster
-func IsResourceHostedByDeployable(obj metav1.Object, instancekey fmt.Stringer) bool {
-	if klog.V(QuiteLogLel) {
-		fnName := GetFnName()
-		klog.Infof("Entering: %v()", fnName)
-		defer klog.Infof("Exiting: %v()", fnName)
-	}
+		if !reflect.DeepEqual(newdpl.GetLabels(), olddpl.GetLabels()) {
+			return true
+		}
 
-	if obj == nil {
-		return false
-	}
+		oldtmpl := &unstructured.Unstructured{}
+		newtmpl := &unstructured.Unstructured{}
 
-	annotation := obj.GetAnnotations()
-	if annotation == nil {
-		return false
-	}
+		if olddpl.Spec.Template == nil || olddpl.Spec.Template.Raw == nil {
+			return true
+		}
+		err := json.Unmarshal(olddpl.Spec.Template.Raw, oldtmpl)
+		if err != nil {
+			return true
+		}
+		if newdpl.Spec.Template.Raw == nil {
+			return true
+		}
+		err = json.Unmarshal(newdpl.Spec.Template.Raw, newtmpl)
+		if err != nil {
+			return true
+		}
 
-	hosting := annotation[appv1alpha1.AnnotationHosting]
+		if !reflect.DeepEqual(newtmpl, oldtmpl) {
+			return true
+		}
 
-	return hosting == instancekey.String()
-}
-
-// IsLocalDeployable checks if the deployable meant to be deployed
-func IsLocalDeployable(instance *appv1alpha1.Deployable) bool {
-	if klog.V(QuiteLogLel) {
-		fnName := GetFnName()
-		klog.Infof("Entering: %v()", fnName)
-		defer klog.Infof("Exiting: %v()", fnName)
-	}
-
-	if instance == nil {
-		return false
-	}
-
-	annotations := instance.GetAnnotations()
-	if annotations == nil || annotations[appv1alpha1.AnnotationLocal] != "true" {
-		return false
-	}
-	return true
+		olddpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
+		return !reflect.DeepEqual(olddpl.Spec, newdpl.Spec)
+	},
 }
 
 // PrepareInstance prepares the deployable instane for later actions
@@ -108,14 +99,9 @@ func PrepareInstance(instance *appv1alpha1.Deployable) bool {
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	// set it to true for now, hub reconcile will remove it as needed
+	// set it to false as default
 	if annotations[appv1alpha1.AnnotationLocal] == "" {
-		annotations[appv1alpha1.AnnotationLocal] = "true"
-	}
-
-	if annotations[appv1alpha1.AnnotationLocal] != "true" {
-		instance.Status.ResourceStatus = nil
-		instance.Status.Phase = ""
+		annotations[appv1alpha1.AnnotationLocal] = "false"
 	}
 
 	if annotations[appv1alpha1.AnnotationManagedCluster] == "" {
@@ -132,24 +118,6 @@ func PrepareInstance(instance *appv1alpha1.Deployable) bool {
 	instance.SetLabels(labels)
 
 	return updated
-}
-
-// ConvertLabels coverts label selector to lables.Selector
-func ConvertLabels(labelSelector *metav1.LabelSelector) (labels.Selector, error) {
-	if klog.V(QuiteLogLel) {
-		fnName := GetFnName()
-		klog.Infof("Entering: %v()", fnName)
-		defer klog.Infof("Exiting: %v()", fnName)
-	}
-
-	if labelSelector != nil {
-		selector, err := metav1.LabelSelectorAsSelector(labelSelector)
-		if err != nil {
-			return labels.Nothing(), err
-		}
-		return selector, nil
-	}
-	return labels.Everything(), nil
 }
 
 // GetUnstructuredTemplateFromDeployable return error if needed
@@ -209,20 +177,6 @@ func GetClusterFromResourceObject(obj metav1.Object) *types.NamespacedName {
 	host := &types.NamespacedName{Name: parsedstr[1], Namespace: parsedstr[0]}
 
 	return host
-}
-
-// IsMyTemplate check if apply the template in the cluster.
-// if there is the same name resource in the cluster, and if its hosting deployable annotation is "/",
-// this is the original resource in hub. no need to deploy the new template
-func IsMyTemplate(obj *unstructured.Unstructured) bool {
-	objAnno := obj.GetAnnotations()
-	if objAnno != nil {
-		objHostingDpl := objAnno[appv1alpha1.AnnotationHosting]
-		if objHostingDpl == "" || objHostingDpl == "/" {
-			return false
-		}
-	}
-	return true
 }
 
 // GetHostDeployableFromObject return nil if no host is found
@@ -349,8 +303,8 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 	return err
 }
 
-// Contains check whether the namespacedName array a contains string x
-func Contains(a []types.NamespacedName, x string) bool {
+// ContainsName check whether the namespacedName array a contains string x
+func ContainsName(a []types.NamespacedName, x string) bool {
 	for _, n := range a {
 		if x == n.Name {
 			return true
