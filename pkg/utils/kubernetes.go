@@ -25,15 +25,19 @@ func ConvertLabels(labelSelector *metav1.LabelSelector) (labels.Selector, error)
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
 	if labelSelector != nil {
 		selector, err := metav1.LabelSelectorAsSelector(labelSelector)
+
 		if err != nil {
 			return labels.Nothing(), err
 		}
+
 		return selector, nil
 	}
+
 	return labels.Everything(), nil
 }

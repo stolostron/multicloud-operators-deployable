@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package exec
 
 import (
 	pflag "github.com/spf13/pflag"

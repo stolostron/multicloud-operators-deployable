@@ -35,10 +35,14 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	var clusters []types.NamespacedName
+
 	var err error
+
 	// Top priority: placementRef, ignore others
 	// Next priority: clusterNames, ignore selector
 	// Bottomline: Use label selector
@@ -46,7 +50,7 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 		clusters, err = r.getClustersFromPlacementRef(instance)
 	} else {
 		clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, instance.Spec.Placement.GenericPlacementFields, r.authClient, instance)
-		if err == nil {
+		if err != nil {
 			klog.Error("Failed to get clusters from generic fields with error: ", err)
 		}
 		for _, cl := range clustermap {
@@ -60,6 +64,7 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 	}
 
 	klog.V(10).Info("Deploying to clusters", clusters)
+
 	return clusters, nil
 }
 
@@ -67,6 +72,7 @@ func (r *ReconcileDeployable) getClustersFromPlacementRef(instance *appv1alpha1.
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -74,8 +80,10 @@ func (r *ReconcileDeployable) getClustersFromPlacementRef(instance *appv1alpha1.
 	// only support mcm placementpolicy now
 	pp := &placementv1alpha1.PlacementRule{}
 	pref := instance.Spec.Placement.PlacementRef
+
 	if len(pref.Kind) > 0 && pref.Kind != "PlacementRule" || len(pref.APIVersion) > 0 && pref.APIVersion != "app.ibm.com/v1alpha1" {
 		klog.Warning("Unsupported placement reference:", instance.Spec.Placement.PlacementRef)
+
 		return nil, nil
 	}
 
@@ -86,8 +94,10 @@ func (r *ReconcileDeployable) getClustersFromPlacementRef(instance *appv1alpha1.
 	if err != nil {
 		if errors.IsNotFound(err) {
 			klog.Warning("Failed to locate placement reference", instance.Spec.Placement.PlacementRef)
+
 			return nil, nil
 		}
+
 		return nil, err
 	}
 

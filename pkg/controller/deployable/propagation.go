@@ -31,22 +31,27 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
 	// try to find children
 	children, err := r.getDeployableFamily(instance)
+
 	if err != nil {
 		klog.Error("Failed to get children deployable with err:", err)
 	}
 
 	// actively delete children deployables when change from hub to local only
 	annotations := instance.GetAnnotations()
+
 	if len(instance.GetFinalizers()) > 0 || instance.Spec.Placement == nil {
 		if annotations[appv1alpha1.AnnotationManagedCluster] == (client.ObjectKey{}).String() {
 			for _, dpl := range children {
 				dplkey := types.NamespacedName{Namespace: dpl.GetNamespace(), Name: dpl.GetName()}
+
 				klog.V(10).Info("As hub, deleting ", dpl.GetNamespace(), "/", dpl.GetName())
+
 				if dpl.Namespace != instance.Namespace {
 					err = r.Delete(context.TODO(), dpl)
 
@@ -55,7 +60,9 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 				}
 			}
 		}
+
 		instance.Status.PropagatedStatus = nil
+
 		return nil
 	}
 
@@ -66,8 +73,10 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 
 	// prepare map to delete expired children
 	expireddeployablemap := make(map[string]*appv1alpha1.Deployable)
+
 	for _, dpl := range children {
 		expireddeployablemap[getDeployableTrueKey(dpl)] = dpl
+
 		if utils.GetClusterFromResourceObject(dpl).Name != "" {
 			instance.Status.PropagatedStatus[utils.GetClusterFromResourceObject(dpl).Name] = dpl.Status.ResourceUnitStatus.DeepCopy()
 		}
@@ -77,6 +86,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	klog.V(10).Info("Existing deployables to check expiration:", expireddeployablemap)
 
 	err = r.rollingUpdate(instance)
+
 	if err != nil {
 		klog.Error("Error in rolling update:", err)
 		return err
@@ -84,6 +94,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 
 	// // Generate deployable for managed clusters
 	clusters, err := r.getClustersByPlacement(instance)
+
 	if err != nil {
 		klog.Error("Error in getting clusters:", err)
 		return err
@@ -98,12 +109,15 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 
 	// delete expired deployables
 	klog.V(10).Info("Expired deployables map:", expireddeployablemap)
+
 	for _, dpl := range expireddeployablemap {
 		delete(instance.Status.PropagatedStatus, utils.GetClusterFromResourceObject(dpl).Name)
 		dplanno := dpl.GetAnnotations()
+
 		if dplanno == nil && dplanno[appv1alpha1.AnnotationShared] == "true" {
 			continue
 		}
+
 		dplkey := types.NamespacedName{Namespace: dpl.GetNamespace(), Name: dpl.GetName()}
 		err = r.Delete(context.TODO(), dpl)
 
@@ -137,6 +151,7 @@ func (r *ReconcileDeployable) getDeployableFamily(instance *appv1alpha1.Deployab
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 	// get all existing deployables
@@ -145,18 +160,23 @@ func (r *ReconcileDeployable) getDeployableFamily(instance *appv1alpha1.Deployab
 	// Label does not support "/" for NamespacedName, let get by name first and filter by annotation later
 	exlabel[appv1alpha1.PropertyHostingDeployableName] = instance.GetName()
 	err := r.List(context.TODO(), client.MatchingLabels(exlabel), exlist)
+
 	if err != nil && !errors.IsNotFound(err) {
 		klog.Error("Trying to list existing deployabe ", instance.GetNamespace(), "/", instance.GetName(), " with error:", err)
 		return nil, err
 	}
 
 	var dpllist []*appv1alpha1.Deployable
+
 	hosting := (types.NamespacedName{Name: instance.GetName(), Namespace: instance.GetNamespace()}).String()
+
 	for _, dpl := range exlist.Items {
 		dplanno := dpl.GetAnnotations()
+
 		if dplanno == nil {
 			continue
 		}
+
 		if dplanno[appv1alpha1.AnnotationHosting] == hosting {
 			dpllist = append(dpllist, dpl.DeepCopy())
 		}
@@ -169,8 +189,10 @@ func getDeployableTrueKey(dpl *appv1alpha1.Deployable) string {
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
+
 	objkey := types.NamespacedName{Name: dpl.Name, Namespace: dpl.Namespace}
 
 	if dpl.GetGenerateName() != "" {

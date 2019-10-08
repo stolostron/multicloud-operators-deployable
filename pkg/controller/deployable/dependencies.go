@@ -31,6 +31,7 @@ func (r *ReconcileDeployable) createManagedDependencies(cluster types.Namespaced
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -48,39 +49,49 @@ func (r *ReconcileDeployable) createManagedDependencies(cluster types.Namespaced
 				Name:      dependency.Name,
 				Namespace: dependency.Namespace,
 			}
+
 			if depobjkey.Namespace == "" {
 				depobjkey.Namespace = instance.Namespace
 			}
 
 			err = r.Get(context.TODO(), depobjkey, depobj)
+
 			if err != nil {
 				return familymap, err
 			}
 
 			objann := depobj.GetAnnotations()
+
 			if objann == nil {
 				objann = make(map[string]string)
 			}
+
 			for k, v := range dependency.Annotations {
 				objann[k] = v
 			}
+
 			depobj.SetAnnotations(objann)
 
 			objlbl := depobj.GetLabels()
+
 			if objlbl == nil {
 				objlbl = make(map[string]string)
 			}
+
 			for k, v := range dependency.Labels {
 				objlbl[k] = v
 			}
+
 			depobj.SetLabels(objlbl)
 
 			if objann[appv1alpha1.AnnotationShared] == "true" {
 				shareddeplist, err := r.getDeployableFamily(depobj)
 				klog.Info("Got shared objs:", shareddeplist)
+
 				if err != nil && !errors.IsNotFound(err) {
 					klog.Error("failed to get shared dependency")
 				}
+
 				for _, dpl := range shareddeplist {
 					if dpl.Namespace == cluster.Namespace {
 						familymap[getDeployableTrueKey(dpl)] = dpl.DeepCopy()
@@ -89,6 +100,7 @@ func (r *ReconcileDeployable) createManagedDependencies(cluster types.Namespaced
 			}
 
 			familymap, err = r.createManagedDeployable(cluster, hosting, depobj, familymap)
+
 			if err != nil {
 				return familymap, err
 			}

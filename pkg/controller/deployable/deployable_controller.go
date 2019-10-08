@@ -72,6 +72,7 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -83,6 +84,7 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 	dplList := &appv1alpha1.DeployableList{}
 	listopts := &client.ListOptions{}
 	err := mapper.List(context.TODO(), listopts, dplList)
+
 	if err != nil {
 		klog.Error("Failed to list deployables for placementrule mapper with error:", err)
 		return requests
@@ -107,6 +109,7 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 			Name:      dpl.GetName(),
 			Namespace: dpl.GetNamespace(),
 		}
+
 		requests = append(requests, reconcile.Request{NamespacedName: objkey})
 	}
 
@@ -121,6 +124,7 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -133,6 +137,7 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 
 	listopts := &client.ListOptions{}
 	err := mapper.List(context.TODO(), listopts, dplList)
+
 	if err != nil {
 		klog.Error("Failed to list deployables for cluster mapper with error:", err)
 		return requests
@@ -146,11 +151,13 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 
 		if dpl.Spec.Placement.ClusterSelector == nil {
 			matched := false
+
 			for _, cn := range dpl.Spec.Placement.Clusters {
 				if cn.Name == cname {
 					matched = true
 				}
 			}
+
 			if !matched {
 				continue
 			}
@@ -169,6 +176,7 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 			Name:      dpl.GetName(),
 			Namespace: dpl.GetNamespace(),
 		}
+
 		requests = append(requests, reconcile.Request{NamespacedName: objkey})
 	}
 
@@ -226,6 +234,7 @@ func (mapper *deployableMapper) Map(obj handler.MapObject) []reconcile.Request {
 	if klog.V(utils.QuiteLogLel) {
 		fnName := utils.GetFnName()
 		klog.Infof("Entering: %v()", fnName)
+
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
@@ -246,6 +255,7 @@ func (mapper *deployableMapper) Map(obj handler.MapObject) []reconcile.Request {
 	dplList := &appv1alpha1.DeployableList{}
 	listopts := &client.ListOptions{Namespace: obj.Meta.GetNamespace()}
 	err := mapper.List(context.TODO(), listopts, dplList)
+
 	if err != nil {
 		klog.Error("Listing deployables in mapper and got error:", err)
 	}
@@ -267,6 +277,7 @@ func (mapper *deployableMapper) Map(obj handler.MapObject) []reconcile.Request {
 			Name:      dpl.GetName(),
 			Namespace: dpl.GetNamespace(),
 		}
+
 		requests = append(requests, reconcile.Request{NamespacedName: objkey})
 	}
 	// end of rolling update check
@@ -300,7 +311,6 @@ type ReconcileDeployable struct {
 // and what is in the Deployable.Spec
 func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Deployable instance
-
 	instance := &appv1alpha1.Deployable{}
 	err := r.Get(context.TODO(), request.NamespacedName, instance)
 	klog.Info("Reconciling:", request.NamespacedName, " with Get err:", err)
@@ -314,6 +324,7 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 		}
 		// Error reading the object - requeue the request.
 		klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
+
 		return reconcile.Result{}, err
 	}
 
@@ -337,6 +348,7 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 			instance.Status.LastUpdateTime = &now
 			klog.V(10).Info("Update status", instance.Status)
 			err = r.Status().Update(context.TODO(), instance)
+
 			if err != nil {
 				klog.Error("Error returned when updating status:", err, "instance:", instance)
 				return reconcile.Result{}, err

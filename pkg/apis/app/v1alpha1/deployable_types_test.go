@@ -47,8 +47,8 @@ func TestStorageDeployable(t *testing.T) {
 
 	// Test: Create a new deployable object
 	fetched := &Deployable{}
-	g.Expect(c.Create(context.TODO(), created)).NotTo(gomega.HaveOccurred())
 
+	g.Expect(c.Create(context.TODO(), created)).NotTo(gomega.HaveOccurred())
 	g.Expect(c.Get(context.TODO(), key, fetched)).NotTo(gomega.HaveOccurred())
 	g.Expect(fetched).To(gomega.Equal(created))
 
