@@ -18,6 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"k8s.io/klog"
+
+	placementruleapis "github.com/IBM/multicloud-operators-placementrule/pkg/apis"
 )
 
 // AddToSchemes may be used to add all resources defined in the project to a Scheme
@@ -27,6 +29,12 @@ var AddToSchemes runtime.SchemeBuilder
 func AddToScheme(s *runtime.Scheme) error {
 	// add cluster scheme
 	if err := clusterv1alpha1.AddToScheme(s); err != nil {
+		klog.Error("unable add cluster to scheme", err)
+		return err
+	}
+
+	// add placementrule scheme
+	if err := placementruleapis.AddToScheme(s); err != nil {
 		klog.Error("unable add cluster to scheme", err)
 		return err
 	}

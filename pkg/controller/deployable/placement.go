@@ -18,15 +18,14 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
 	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
 	placementv1alpha1 "github.com/IBM/multicloud-operators-placementrule/pkg/apis/app/v1alpha1"
+	placementutils "github.com/IBM/multicloud-operators-placementrule/pkg/utils"
 )
 
 // Top priority: placementRef, ignore others
@@ -46,41 +45,11 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 	if instance.Spec.Placement.PlacementRef != nil {
 		clusters, err = r.getClustersFromPlacementRef(instance)
 	} else {
-		var labelSelector *metav1.LabelSelector
-
-		if instance.Spec.Placement.Clusters != nil {
-			namereq := metav1.LabelSelectorRequirement{}
-			namereq.Key = "name"
-			namereq.Operator = metav1.LabelSelectorOpIn
-			for _, cl := range instance.Spec.Placement.Clusters {
-				namereq.Values = append(namereq.Values, cl.Name)
-			}
-			labelSelector = &metav1.LabelSelector{
-				MatchExpressions: []metav1.LabelSelectorRequirement{namereq},
-			}
-		} else {
-			labelSelector = instance.Spec.Placement.ClusterSelector
+		clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, instance.Spec.Placement.GenericPlacementFields, r.authClient, instance)
+		if err == nil {
+			klog.Error("Failed to get clusters from generic fields with error: ", err)
 		}
-		clSelector, err := utils.ConvertLabels(labelSelector)
-		if err != nil {
-			return nil, err
-		}
-		klog.V(10).Info("Using Cluster LabelSelector ", clSelector)
-		cllist := &clusterv1alpha1.ClusterList{}
-		err = r.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, cllist)
-		if err != nil && !errors.IsNotFound(err) {
-			klog.Error("Listing clusters and found error: ", err)
-			return nil, err
-		}
-
-		var allcls []*clusterv1alpha1.Cluster
-		for _, cl := range cllist.Items {
-			allcls = append(allcls, cl.DeepCopy())
-		}
-
-		//	should add identity check here e.g. allcls = utils.FilteClustersByIdentity(r.authClient, instance, allcls)
-
-		for _, cl := range allcls {
+		for _, cl := range clustermap {
 			clusters = append(clusters, types.NamespacedName{Name: cl.Name, Namespace: cl.Namespace})
 		}
 	}

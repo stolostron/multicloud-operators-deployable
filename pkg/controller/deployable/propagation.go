@@ -118,7 +118,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	//remove expired clusters from instance status targetClusters list
 	clusterStatusMap := instance.Status.PropagatedStatus
 	for clusterName := range clusterStatusMap {
-		if !utils.Contains(clusters, clusterName) {
+		if !utils.ContainsName(clusters, clusterName) {
 			delete(instance.Status.PropagatedStatus, clusterName)
 		}
 	}

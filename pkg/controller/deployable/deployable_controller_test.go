@@ -164,7 +164,7 @@ func TestPropagate(t *testing.T) {
 
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
-	placecluster := placementrulev1alpha1.Cluster{
+	placecluster := placementrulev1alpha1.GenericClusterReference{
 		Name: endpoint1.GetName(),
 	}
 
@@ -178,7 +178,9 @@ func TestPropagate(t *testing.T) {
 				Object: payload,
 			},
 			Placement: &placementrulev1alpha1.Placement{
-				Clusters: []placementrulev1alpha1.Cluster{placecluster},
+				GenericPlacementFields: placementrulev1alpha1.GenericPlacementFields{
+					Clusters: []placementrulev1alpha1.GenericClusterReference{placecluster},
+				},
 			},
 		},
 	}
