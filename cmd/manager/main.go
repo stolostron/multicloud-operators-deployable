@@ -24,7 +24,7 @@ import (
 	"k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 
-	"github.com/IBM/multicloud-operators-placementrule/cmd/manager/exec"
+	"github.com/IBM/multicloud-operators-deployable/cmd/manager/exec"
 )
 
 func main() {
