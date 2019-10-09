@@ -4,20 +4,10 @@ require (
 	github.com/IBM/multicloud-operators-placementrule v0.0.0-20191008174057-c9a4d98e0b6a
 	github.com/cameront/go-jsonpatch v0.0.0-20180223123257-a8710867776e
 	github.com/go-openapi/spec v0.19.0
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golangci/gocyclo v0.0.0-20180528144436-0a533e8fa43d // indirect
-	github.com/golangci/golangci-lint v1.20.0 // indirect
-	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
-	github.com/gostaticanalysis/analysisutil v0.0.3 // indirect
-	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/onsi/gomega v1.7.0
 	github.com/operator-framework/operator-sdk v0.10.1-0.20191004014855-dc713e4d7890
-	github.com/pelletier/go-toml v1.5.0 // indirect
 	github.com/prometheus/common v0.4.0
-	github.com/securego/gosec v0.0.0-20191008095658-28c1128b7336 // indirect
 	github.com/spf13/pflag v1.0.5
-	github.com/uudashr/gocognit v1.0.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 	k8s.io/api v0.0.0-20190612125737-db0771252981
@@ -27,10 +17,8 @@ require (
 	k8s.io/cluster-registry v0.0.6
 	k8s.io/klog v0.3.1
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208
-	mvdan.cc/unparam v0.0.0-20190917161559-b83a221c10a2 // indirect
 	sigs.k8s.io/controller-runtime v0.1.12
 	sigs.k8s.io/controller-tools v0.1.10
-	sourcegraph.com/sqs/pbtypes v1.0.0 // indirect
 )
 
 // Pinned to kubernetes-1.13.4

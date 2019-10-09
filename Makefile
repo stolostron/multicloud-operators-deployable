@@ -99,7 +99,7 @@ test:
 ############################################################
 
 build: test
-	common/scripts/gobuild.sh build/_output/bin/$(IMG) ./cmd/manager
+	@common/scripts/gobuild.sh build/_output/bin/$(IMG) ./cmd/manager
 
 ############################################################
 # images section
