@@ -70,7 +70,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 
 		ov := appv1alpha1.Overrides{}
 
-		ov.ClusterOverrides = utils.GenerateOverrides(targetdpl, instance)
+		ov.ClusterOverrides = utils.GenerateOverrides(instance, targetdpl)
 
 		covmap := make(map[string]appv1alpha1.Overrides)
 

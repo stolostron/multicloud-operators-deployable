@@ -1,0 +1,26 @@
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  labels:
+    deployable-label: "passed-in"
+  name: example-configmap
+  namespace: default
+spec:
+  template:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: 
+      namespace: default
+    data:
+      purpose: for test
+  placement:
+    clusterSelector: {}
+  overrides:
+  - clusterName: endpoint2-ns
+    clusterOverrides:
+    - path: data
+      value:
+        foo: bar

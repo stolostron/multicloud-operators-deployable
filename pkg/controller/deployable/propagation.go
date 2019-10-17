@@ -201,3 +201,79 @@ func getDeployableTrueKey(dpl *appv1alpha1.Deployable) string {
 
 	return objkey.String()
 }
+
+// GetAllHostDeployableFromObject return all hosting deployables from the given dpl instance
+func (r *ReconcileDeployable) GetAllHostDeployableFromObject(instance *appv1alpha1.Deployable) []*types.NamespacedName {
+	host := utils.GetHostDeployableFromObject(instance)
+	if host == nil || host.String() == (client.ObjectKey{}).String() {
+		return nil
+	}
+
+	hostDpl := &appv1alpha1.Deployable{}
+	err := r.Get(context.TODO(), *host, hostDpl)
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return []*types.NamespacedName{host}
+		}
+	}
+
+	otherHosts := r.GetAllHostDeployableFromObject(hostDpl)
+
+	return append(otherHosts, host)
+}
+
+// validateDeployables validate parent deployable exist or not. The deployables with empty parent will be removed.
+func (r *ReconcileDeployable) validateDeployables() error {
+	deployablelist := &appv1alpha1.DeployableList{}
+	listopts := &client.ListOptions{}
+	err := r.List(context.TODO(), listopts, deployablelist)
+
+	if err != nil {
+		klog.Error("Failed to obtain deployable list")
+		return err
+	}
+
+	// construct a map to make things easier
+	deployableMap := make(map[string]*appv1alpha1.Deployable)
+	for _, dpl := range deployablelist.Items {
+		deployableMap[(types.NamespacedName{Name: dpl.GetName(), Namespace: dpl.GetNamespace()}).String()] = dpl.DeepCopy()
+		klog.V(5).Info("validateDeployables() dpl: ", dpl.GetNamespace(), " ", dpl.GetName())
+	}
+
+	// check each deployable for parents
+	for k, v := range deployableMap {
+		obj := v.DeepCopy()
+
+		annotations := obj.GetAnnotations()
+		if annotations == nil {
+			// newly added not processed yet break this loop
+			break
+		}
+
+		allHosts := r.GetAllHostDeployableFromObject(obj)
+		if allHosts == nil {
+			continue
+		}
+
+		for _, host := range allHosts {
+			klog.V(5).Infof("obj: %#v, hosting deployable: %#v", obj.GetNamespace()+"/"+obj.GetName(), host)
+
+			ok := false
+			_, ok = deployableMap[host.String()]
+
+			if !ok {
+				// parent is gone, delete the deployable from map and from kube
+				delete(deployableMap, k)
+
+				err = r.Delete(context.TODO(), obj)
+
+				klog.V(5).Infof("parent is gone, delete the deployable from map and from kube: host: %#v, k: %#v, v: %#v, err: %#v", host, k, v, err)
+
+				break
+			}
+		}
+	}
+
+	return nil
+}
