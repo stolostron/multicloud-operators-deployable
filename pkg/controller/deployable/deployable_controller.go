@@ -317,7 +317,8 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 
 	if err != nil {
 		if errors.IsNotFound(err) {
-			//validate all deployables, remove the deployables whose hosting deployables are gone
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// validate all deployables, remove the deployables whose hosting deployables are gone
 			err = r.validateDeployables()
 
 			klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)

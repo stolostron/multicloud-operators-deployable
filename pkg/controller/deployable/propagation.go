@@ -202,27 +202,6 @@ func getDeployableTrueKey(dpl *appv1alpha1.Deployable) string {
 	return objkey.String()
 }
 
-// GetAllHostDeployableFromObject return all hosting deployables from the given dpl instance
-func (r *ReconcileDeployable) GetAllHostDeployableFromObject(instance *appv1alpha1.Deployable) []*types.NamespacedName {
-	host := utils.GetHostDeployableFromObject(instance)
-	if host == nil || host.String() == (client.ObjectKey{}).String() {
-		return nil
-	}
-
-	hostDpl := &appv1alpha1.Deployable{}
-	err := r.Get(context.TODO(), *host, hostDpl)
-
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return []*types.NamespacedName{host}
-		}
-	}
-
-	otherHosts := r.GetAllHostDeployableFromObject(hostDpl)
-
-	return append(otherHosts, host)
-}
-
 // validateDeployables validate parent deployable exist or not. The deployables with empty parent will be removed.
 func (r *ReconcileDeployable) validateDeployables() error {
 	deployablelist := &appv1alpha1.DeployableList{}
@@ -251,23 +230,24 @@ func (r *ReconcileDeployable) validateDeployables() error {
 			break
 		}
 
-		allHosts := r.GetAllHostDeployableFromObject(obj)
-		if allHosts == nil {
-			continue
-		}
+		hostDpl := obj
 
-		for _, host := range allHosts {
+		for hostDpl != nil {
+			host := utils.GetHostDeployableFromObject(hostDpl)
+			if host == nil {
+				break
+			}
+
 			klog.V(5).Infof("obj: %#v, hosting deployable: %#v", obj.GetNamespace()+"/"+obj.GetName(), host)
 
 			ok := false
-			_, ok = deployableMap[host.String()]
+			hostDpl, ok = deployableMap[host.String()]
 
 			if !ok {
 				// parent is gone, delete the deployable from map and from kube
 				delete(deployableMap, k)
 
 				err = r.Delete(context.TODO(), obj)
-
 				klog.V(5).Infof("parent is gone, delete the deployable from map and from kube: host: %#v, k: %#v, v: %#v, err: %#v", host, k, v, err)
 
 				break

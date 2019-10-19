@@ -12,7 +12,7 @@ spec:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: 
+      name: config1
       namespace: default
     data:
       purpose: for test

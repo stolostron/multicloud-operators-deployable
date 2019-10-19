@@ -16,12 +16,10 @@ package deployable
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/onsi/gomega"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
@@ -52,7 +50,7 @@ var (
 )
 
 var (
-	endpoint1 = &clusterv1alpha1.Cluster{
+	endpoint1 = clusterv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"name": "endpoint1-ns",
@@ -61,14 +59,14 @@ var (
 			Namespace: "endpoint1-ns",
 		},
 	}
-	endpoint1ns = &corev1.Namespace{
+	endpoint1ns = corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "endpoint1-ns",
 			Namespace: "endpoint1-ns",
 		},
 	}
 
-	endpoint2 = &clusterv1alpha1.Cluster{
+	endpoint2 = clusterv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"name": "endpoint2-ns",
@@ -77,15 +75,15 @@ var (
 			Namespace: "endpoint2-ns",
 		},
 	}
-	endpoint2ns = &corev1.Namespace{
+	endpoint2ns = corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "endpoint2-ns",
 			Namespace: "endpoint2-ns",
 		},
 	}
 
-	endpointnss = []*corev1.Namespace{endpoint1ns, endpoint2ns}
-	endpoints   = []*clusterv1alpha1.Cluster{endpoint1, endpoint2}
+	endpointnss = []corev1.Namespace{endpoint1ns, endpoint2ns}
+	endpoints   = []clusterv1alpha1.Cluster{endpoint1, endpoint2}
 )
 
 var (
@@ -120,14 +118,12 @@ func TestPropagate(t *testing.T) {
 	}()
 
 	for _, ns := range endpointnss {
-		err = c.Create(context.TODO(), ns)
+		err = c.Create(context.TODO(), &ns)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
-
-		defer c.Delete(context.TODO(), ns)
 	}
 
 	for _, ep := range endpoints {
-		err = c.Create(context.TODO(), ep)
+		err = c.Create(context.TODO(), &ep)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 	}
 
@@ -178,7 +174,7 @@ func TestPropagate(t *testing.T) {
 		}
 	}
 
-	//delete the instance, verify the propagated dpls in the two clusters should be removed
+	//delete the instance, verify the propagated dpls in the endpoint1 cluster should be removed
 	err = c.Delete(context.TODO(), instance)
 
 	g.Expect(err).NotTo(gomega.HaveOccurred())
@@ -189,8 +185,6 @@ func TestPropagate(t *testing.T) {
 	dpllist = &appv1alpha1.DeployableList{}
 	err = c.List(context.TODO(), &client.ListOptions{Namespace: endpoint1.GetNamespace()}, dpllist)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
-
-	t.Logf("dpl items: %v", dpllist.Items)
 
 	if len(dpllist.Items) != 0 {
 		t.Errorf("Failed to delete propagated deployable in cluster endpoint1. items: %v", dpllist)
@@ -262,27 +256,51 @@ func TestOverride(t *testing.T) {
 		mgrStopped.Wait()
 	}()
 
-	for _, ns := range endpointnss {
-		err = c.Create(context.TODO(), ns)
-		g.Expect(err).NotTo(gomega.HaveOccurred())
+	configData1 := make(map[string]string)
+	configData1["purpose"] = "for test"
 
-		defer c.Delete(context.TODO(), ns)
+	configMapTpl := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "config1",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		Data: configData1,
 	}
 
-	for _, ep := range endpoints {
-		err = c.Create(context.TODO(), ep)
-		g.Expect(err).NotTo(gomega.HaveOccurred())
+	clusteroveride := appv1alpha1.ClusterOverride{RawExtension: runtime.RawExtension{Raw: []byte("{\"path\": \"data\", \"value\": {\"foo\": \"bar\"}}")}}
+	clusteroverideArray := []appv1alpha1.ClusterOverride{clusteroveride}
+
+	override := appv1alpha1.Overrides{
+		ClusterName:      "endpoint2-ns",
+		ClusterOverrides: clusteroverideArray,
 	}
+	overrideArray := []appv1alpha1.Overrides{override}
 
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-
-	dplobj := &appv1alpha1.Deployable{}
-
-	dpldata, err := ioutil.ReadFile("../../../examples/configmap-hub-deployable.yaml")
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-
-	err = yaml.Unmarshal(dpldata, dplobj)
-	g.Expect(err).NotTo(gomega.HaveOccurred())
+	dplobj := &appv1alpha1.Deployable{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "app.ibm.com/v1alpha1",
+			Kind:       "Deployable",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dplname,
+			Namespace: dplns,
+		},
+		Spec: appv1alpha1.DeployableSpec{
+			Template: &runtime.RawExtension{
+				Object: configMapTpl,
+			},
+			Placement: &placementrulev1alpha1.Placement{
+				GenericPlacementFields: placementrulev1alpha1.GenericPlacementFields{
+					ClusterSelector: &metav1.LabelSelector{},
+				},
+			},
+			Overrides: overrideArray,
+		},
+	}
 
 	err = c.Create(context.TODO(), dplobj)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
@@ -292,6 +310,8 @@ func TestOverride(t *testing.T) {
 	var expectedRequest = reconcile.Request{NamespacedName: dplkey}
 
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(1 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
 	err = c.List(context.TODO(), &client.ListOptions{}, dpllist)
