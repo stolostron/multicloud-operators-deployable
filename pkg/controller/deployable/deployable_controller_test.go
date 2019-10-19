@@ -94,48 +94,6 @@ var (
 	}
 )
 
-func TestReconcile(t *testing.T) {
-	g := gomega.NewGomegaWithT(t)
-
-	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
-	// channel when it is finished.
-
-	mgr, err := manager.New(cfg, manager.Options{})
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-
-	c = mgr.GetClient()
-
-	recFn, requests := SetupTestReconcile(newReconciler(mgr))
-	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
-
-	stopMgr, mgrStopped := StartTestManager(mgr, g)
-
-	defer func() {
-		close(stopMgr)
-		mgrStopped.Wait()
-	}()
-
-	instance := &appv1alpha1.Deployable{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dplname,
-			Namespace: dplns,
-		},
-		Spec: appv1alpha1.DeployableSpec{
-			Template: &runtime.RawExtension{
-				Object: payload,
-			},
-		},
-	}
-	err = c.Create(context.TODO(), instance)
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-
-	defer c.Delete(context.TODO(), instance)
-
-	var expectedRequest = reconcile.Request{NamespacedName: dplkey}
-
-	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
-}
-
 func TestPropagate(t *testing.T) {
 	var err error
 
@@ -231,6 +189,48 @@ func TestPropagate(t *testing.T) {
 	if len(dpllist.Items) != 0 {
 		t.Errorf("Failed to delete propagated deployable in cluster endpoint1. items: %v", dpllist)
 	}
+}
+
+func TestReconcile(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+
+	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+	// channel when it is finished.
+
+	mgr, err := manager.New(cfg, manager.Options{})
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	c = mgr.GetClient()
+
+	recFn, requests := SetupTestReconcile(newReconciler(mgr))
+	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
+
+	stopMgr, mgrStopped := StartTestManager(mgr, g)
+
+	defer func() {
+		close(stopMgr)
+		mgrStopped.Wait()
+	}()
+
+	instance := &appv1alpha1.Deployable{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dplname,
+			Namespace: dplns,
+		},
+		Spec: appv1alpha1.DeployableSpec{
+			Template: &runtime.RawExtension{
+				Object: payload,
+			},
+		},
+	}
+	err = c.Create(context.TODO(), instance)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	defer c.Delete(context.TODO(), instance)
+
+	var expectedRequest = reconcile.Request{NamespacedName: dplkey}
+
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 }
 
 func TestOverride(t *testing.T) {
