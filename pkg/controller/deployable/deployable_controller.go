@@ -318,9 +318,12 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
-			// For additional cleanup logic use finalizers.
+			// validate all deployables, remove the deployables whose hosting deployables are gone
+			err = r.validateDeployables()
+
 			klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
-			return reconcile.Result{}, nil
+
+			return reconcile.Result{}, err
 		}
 		// Error reading the object - requeue the request.
 		klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
@@ -343,7 +346,7 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 
 	// reconcile finished check if need to upadte the resource
 	if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
-		if !reflect.DeepEqual(savedStatus, instance.Status) {
+		if !reflect.DeepEqual(savedStatus, &(instance.Status)) {
 			now := metav1.Now()
 			instance.Status.LastUpdateTime = &now
 			klog.V(10).Info("Update status", instance.Status)

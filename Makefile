@@ -110,6 +110,9 @@ coverage:
 build: 
 	@common/scripts/gobuild.sh build/_output/bin/$(IMG) ./cmd/manager
 
+local:
+	@GOOS=darwin common/scripts/gobuild.sh build/_output/bin/$(IMG) ./cmd/manager
+
 ############################################################
 # images section
 ############################################################

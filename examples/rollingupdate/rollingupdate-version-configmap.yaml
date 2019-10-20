@@ -1,0 +1,15 @@
+apiVersion: app.ibm.com/v1alpha1
+kind: Deployable
+metadata:
+  annotations:
+    app.ibm.com/is-local-deployable: "false"
+  name: version-configmap
+  namespace: default
+spec:
+  template:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      namespace: default
+    data:
+      purpose: rolling update
