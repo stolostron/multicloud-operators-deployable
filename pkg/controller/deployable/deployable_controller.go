@@ -346,7 +346,7 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 
 	// reconcile finished check if need to upadte the resource
 	if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
-		if !reflect.DeepEqual(savedStatus, instance.Status) {
+		if !reflect.DeepEqual(savedStatus, &(instance.Status)) {
 			now := metav1.Now()
 			instance.Status.LastUpdateTime = &now
 			klog.V(10).Info("Update status", instance.Status)

@@ -243,7 +243,11 @@ func (r *ReconcileDeployable) validateDeployables() error {
 			ok := false
 			hostDpl, ok = deployableMap[host.String()]
 
-			if !ok {
+			if ok {
+				if host.Namespace == obj.GetNamespace() && host.Name == obj.GetName() {
+					break
+				}
+			} else {
 				// parent is gone, delete the deployable from map and from kube
 				delete(deployableMap, k)
 
