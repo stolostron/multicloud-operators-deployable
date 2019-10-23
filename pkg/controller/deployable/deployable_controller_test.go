@@ -17,6 +17,8 @@ package deployable
 import (
 	"encoding/json"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
@@ -33,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
+	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
 	placementrulev1alpha1 "github.com/IBM/multicloud-operators-placementrule/pkg/apis/app/v1alpha1"
 )
 
@@ -372,4 +376,650 @@ func TestOverride(t *testing.T) {
 			}
 		}
 	}
+
+	//clean up root deploayble and
+	instance1 := &appv1alpha1.Deployable{}
+	err = c.Get(context.TODO(), dplkey, instance1)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	err = c.Delete(context.TODO(), instance1)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+}
+
+func TestRollingUpdateStatus(t *testing.T) {
+	var err error
+
+	//create 1 managed clusters for the rolling update test
+	endpointns := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "postrollingendpoint-ns",
+			Namespace: "postrollingendpoint-ns",
+			Labels: map[string]string{
+				"name": "postrollingendpoint",
+			},
+		},
+	}
+	endpoint := clusterv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{
+				"name": "postrollingendpoint",
+			},
+			Name:      "postrollingendpoint-ns",
+			Namespace: "postrollingendpoint-ns",
+		},
+	}
+
+	g := gomega.NewGomegaWithT(t)
+
+	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+	// channel when it is finished.
+
+	mgr, err := manager.New(cfg, manager.Options{})
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	c = mgr.GetClient()
+
+	recFn, requests := SetupTestReconcile(newReconciler(mgr))
+	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
+
+	stopMgr, mgrStopped := StartTestManager(mgr, g)
+
+	defer func() {
+		close(stopMgr)
+		mgrStopped.Wait()
+	}()
+
+	err = c.Create(context.TODO(), &endpointns)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	err = c.Create(context.TODO(), &endpoint)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	//Make sure the namepsaces are created correctly.
+	namereq := metav1.LabelSelectorRequirement{}
+	namereq.Key = "name"
+	namereq.Operator = metav1.LabelSelectorOpIn
+
+	namereq.Values = []string{"postrollingendpoint"}
+	labelSelector := &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{namereq},
+	}
+
+	clSelector, err := utils.ConvertLabels(labelSelector)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	nslist := &corev1.NamespaceList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, nslist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	if len(nslist.Items) != 1 {
+		t.Errorf("Failed to create namespaces. items: %v", nslist.Items)
+	}
+
+	//create target dpl - versionConfigMapTpl
+	configData1 := make(map[string]string)
+	configData1["purpose"] = "rolling update"
+
+	anno1 := make(map[string]string)
+	anno1["app.ibm.com/is-local-deployable"] = "false"
+
+	versionConfigMapTpl := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "config1",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		Data: configData1,
+	}
+
+	rollingVersionConfigmapDpl := &appv1alpha1.Deployable{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "app.ibm.com/v1alpha1",
+			Kind:       "Deployable",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "postrollingupdate-version-configmap",
+			Namespace:   "default",
+			Annotations: anno1,
+		},
+		Spec: appv1alpha1.DeployableSpec{
+			Template: &runtime.RawExtension{
+				Object: versionConfigMapTpl,
+			},
+		},
+	}
+
+	err = c.Create(context.TODO(), rollingVersionConfigmapDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	//create configMapTpl dpl. Now it is no target deploayble annotation
+	configData2 := make(map[string]string)
+	configData2["purpose"] = "test"
+
+	anno2 := make(map[string]string)
+	anno2["app.ibm.com/is-local-deployable"] = "false"
+
+	configMapTpl := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "config2",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		Data: configData2,
+	}
+
+	rollingConfigmapDpl := &appv1alpha1.Deployable{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "app.ibm.com/v1alpha1",
+			Kind:       "Deployable",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "postrollingupdate-configmap",
+			Namespace:   "default",
+			Annotations: anno2,
+			Labels: map[string]string{
+				"name": "postrollingendpoint",
+			},
+		},
+		Spec: appv1alpha1.DeployableSpec{
+			Template: &runtime.RawExtension{
+				Object: configMapTpl,
+			},
+			Placement: &placementrulev1alpha1.Placement{
+				GenericPlacementFields: placementrulev1alpha1.GenericPlacementFields{
+					ClusterSelector: labelSelector,
+				},
+			},
+		},
+	}
+
+	err = c.Create(context.TODO(), rollingConfigmapDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	rollingDplKey := types.NamespacedName{
+		Name:      "postrollingupdate-configmap",
+		Namespace: "default",
+	}
+
+	var expectedRequest = reconcile.Request{NamespacedName: rollingDplKey}
+
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(1 * time.Second)
+
+	dpllist := &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	if len(dpllist.Items) != 2 {
+		t.Errorf("Failed to propagate to cluster endpoints. items: %v", dpllist)
+	}
+
+	//set up those propagated deployables to deployed status
+	for _, dpl := range dpllist.Items {
+		expgenname := rollingConfigmapDpl.GetName() + "-"
+
+		if dpl.Namespace != "default" && dpl.GetGenerateName() != expgenname {
+			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
+		}
+
+		dpl.Status.Phase = "Deployed"
+		now := metav1.Now()
+		dpl.Status.LastUpdateTime = &now
+		err = c.Status().Update(context.TODO(), &dpl)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+	}
+
+	time.Sleep(2 * time.Second)
+
+	dpllist = &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	rootDpl := &appv1alpha1.Deployable{}
+
+	for _, dpl := range dpllist.Items {
+		if dpl.Status.Phase != "Deployed" {
+			t.Errorf("The dpl is not deployed yet. Dpl namespace: %#v, status: %#v", dpl.GetNamespace(), dpl.Status)
+		}
+
+		if dpl.Namespace == "default" {
+			rootDpl = dpl.DeepCopy()
+		}
+	}
+
+	//annotate rolling update target to the root deployable and trigger reconcile
+	rootDpl.Annotations["app.ibm.com/rollingupdate-target"] = "postrollingupdate-version-configmap"
+	err = c.Update(context.TODO(), rootDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(2 * time.Second)
+
+	dpllist = &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	for _, dpl := range dpllist.Items {
+		expgenname := rollingConfigmapDpl.GetName() + "-"
+
+		if dpl.Namespace != "default" && dpl.GetGenerateName() != expgenname {
+			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
+		}
+
+		//verify template override on managed clusters by the given rollingupdate-target in the parent deployable.
+		if dpl.Namespace == "default" {
+			template := &unstructured.Unstructured{}
+			json.Unmarshal(dpl.Spec.Template.Raw, template)
+
+			var expectecdData = make(map[string]interface{})
+			expectecdData["purpose"] = "test"
+
+			if !reflect.DeepEqual(expectecdData, template.Object["data"]) {
+				t.Errorf("Incorrect deployable rolling update. expected data: %#v, actual data: %#v", expectecdData, template.Object["data"])
+			}
+		} else {
+			template := &unstructured.Unstructured{}
+			json.Unmarshal(dpl.Spec.Template.Raw, template)
+
+			var expectecdData = make(map[string]interface{})
+			expectecdData["purpose"] = "rolling update"
+
+			if !reflect.DeepEqual(expectecdData, template.Object["data"]) {
+				t.Errorf("Incorrect deployable rolling update. expected data: %#v, actual data: %#v", expectecdData, template.Object["data"])
+			}
+
+			if dpl.Status.Phase != "" {
+				t.Errorf("After rolling update, the previously deployed deployable status should be reset. dpl.Status: %#v", dpl.Status)
+			}
+		}
+	}
+}
+
+func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1alpha1.Deployable, *appv1alpha1.Deployable) {
+	//create target dpl - versionConfigMapTpl
+	configData1 := make(map[string]string)
+	configData1["purpose"] = "rolling update"
+
+	anno1 := make(map[string]string)
+	anno1["app.ibm.com/is-local-deployable"] = "false"
+
+	versionConfigMapTpl := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "config1",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		Data: configData1,
+	}
+
+	rollingVersionConfigmapDpl := &appv1alpha1.Deployable{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "app.ibm.com/v1alpha1",
+			Kind:       "Deployable",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "version-configmap",
+			Namespace:   "default",
+			Annotations: anno1,
+		},
+		Spec: appv1alpha1.DeployableSpec{
+			Template: &runtime.RawExtension{
+				Object: versionConfigMapTpl,
+			},
+		},
+	}
+
+	//create configMapTpl dpl. Now it is no target deploayble annotation
+	configData2 := make(map[string]string)
+	configData2["purpose"] = "test"
+
+	anno2 := make(map[string]string)
+	anno2["app.ibm.com/is-local-deployable"] = "false"
+
+	configMapTpl := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "config2",
+			Namespace: "default",
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		Data: configData2,
+	}
+
+	rollingConfigmapDpl := &appv1alpha1.Deployable{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "app.ibm.com/v1alpha1",
+			Kind:       "Deployable",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "rollingupdate-configmap",
+			Namespace:   "default",
+			Annotations: anno2,
+			Labels: map[string]string{
+				"name": "rollingendpoint",
+			},
+		},
+		Spec: appv1alpha1.DeployableSpec{
+			Template: &runtime.RawExtension{
+				Object: configMapTpl,
+			},
+			Placement: &placementrulev1alpha1.Placement{
+				GenericPlacementFields: placementrulev1alpha1.GenericPlacementFields{
+					ClusterSelector: labelSelector,
+				},
+			},
+		},
+	}
+
+	return rollingVersionConfigmapDpl, rollingConfigmapDpl
+}
+
+var rollingEndpointnss = []corev1.Namespace{}
+
+var rollingEndpoints = []clusterv1alpha1.Cluster{}
+
+var g *gomega.GomegaWithT
+var requests chan reconcile.Request
+var recFn reconcile.Reconciler
+var expectedRequest reconcile.Request
+var clSelector labels.Selector
+
+func TestRollingUpdate(t *testing.T) {
+	var err error
+
+	//create 10 managed clusters for the rolling update test
+	for i := 1; i <= 10; i++ {
+		endpointns := corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "rollingendpoint" + strconv.Itoa(i) + "-ns",
+				Namespace: "rollingendpoint" + strconv.Itoa(i) + "-ns",
+				Labels: map[string]string{
+					"name": "rollingendpoint",
+				},
+			},
+		}
+		endpoint := clusterv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					"name": "rollingendpoint",
+				},
+				Name:      "rollingendpoint" + strconv.Itoa(i) + "-ns",
+				Namespace: "rollingendpoint" + strconv.Itoa(i) + "-ns",
+			},
+		}
+
+		rollingEndpointnss = append(rollingEndpointnss, endpointns)
+		rollingEndpoints = append(rollingEndpoints, endpoint)
+	}
+
+	g = gomega.NewGomegaWithT(t)
+
+	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+	// channel when it is finished.
+
+	mgr, err := manager.New(cfg, manager.Options{})
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	c = mgr.GetClient()
+
+	recFn, requests = SetupTestReconcile(newReconciler(mgr))
+	g.Expect(add(mgr, recFn)).NotTo(gomega.HaveOccurred())
+
+	stopMgr, mgrStopped := StartTestManager(mgr, g)
+
+	defer func() {
+		close(stopMgr)
+		mgrStopped.Wait()
+	}()
+
+	for _, ns := range rollingEndpointnss {
+		err = c.Create(context.TODO(), &ns)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+	}
+
+	for _, ep := range rollingEndpoints {
+		err = c.Create(context.TODO(), &ep)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+	}
+
+	//Make sure the 10 namepsaces are created correctly.
+	namereq := metav1.LabelSelectorRequirement{}
+	namereq.Key = "name"
+	namereq.Operator = metav1.LabelSelectorOpIn
+
+	namereq.Values = []string{"rollingendpoint"}
+	labelSelector := &metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{namereq},
+	}
+
+	clSelector, err = utils.ConvertLabels(labelSelector)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	nslist := &corev1.NamespaceList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, nslist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	if len(nslist.Items) != 10 {
+		t.Errorf("Failed to create namespaces. items: %v", nslist.Items)
+	}
+
+	rollingVersionConfigmapDpl, rollingConfigmapDpl := prepareRollingUpdateDployables(labelSelector)
+
+	err = c.Create(context.TODO(), rollingVersionConfigmapDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	err = c.Create(context.TODO(), rollingConfigmapDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	rollingDplKey := types.NamespacedName{
+		Name:      "rollingupdate-configmap",
+		Namespace: "default",
+	}
+
+	expectedRequest = reconcile.Request{NamespacedName: rollingDplKey}
+
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(1 * time.Second)
+
+	dpllist := &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	if len(dpllist.Items) != 11 {
+		t.Errorf("Failed to propagate to cluster endpoints. items: %v", dpllist)
+	}
+
+	//set up those propagated deployables to deployed status
+	for _, dpl := range dpllist.Items {
+		expgenname := rollingConfigmapDpl.GetName() + "-"
+
+		if dpl.Namespace != "default" && dpl.GetGenerateName() != expgenname {
+			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
+		}
+
+		if dpl.Namespace != "default" {
+			dpl.Status.Phase = "Deployed"
+			now := metav1.Now()
+			dpl.Status.LastUpdateTime = &now
+			err = c.Status().Update(context.TODO(), &dpl)
+			g.Expect(err).NotTo(gomega.HaveOccurred())
+		}
+	}
+
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(2 * time.Second)
+
+	dpllist = &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	rootDpl := &appv1alpha1.Deployable{}
+
+	for _, dpl := range dpllist.Items {
+		if dpl.Namespace != "default" {
+			if dpl.Status.Phase != "Deployed" {
+				t.Errorf("The dpl is not deployed yet. Dpl namespace: %#v, status: %#v", dpl.GetNamespace(), dpl.Status)
+			}
+		} else {
+			rootDpl = dpl.DeepCopy()
+
+			if len(rootDpl.Status.PropagatedStatus) != 10 {
+				t.Errorf("Incorrect propagated status array. rootDpl.Status.PropagatedStatus: %#v", rootDpl.Status.PropagatedStatus)
+			}
+
+			for cluster, rustatus := range rootDpl.Status.PropagatedStatus {
+				if rustatus.Phase != "Deployed" {
+					t.Errorf("Incorrect propagated status. cluster: %#v, rustatus: %#v", cluster, rustatus)
+				}
+			}
+		}
+	}
+
+	annotateRollingUpdate(t, rootDpl, rollingConfigmapDpl)
+}
+
+func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alpha1.Deployable) {
+	var err error
+
+	//annotate rolling update target to the root deployable and trigger reconcile, 3 deployables are expected to rolling update.
+	rootDpl.Annotations["app.ibm.com/rollingupdate-target"] = "version-configmap"
+	err = c.Update(context.TODO(), rootDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(2 * time.Second)
+
+	dpllist := &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	updatedDpls := make(map[string]appv1alpha1.Deployable)
+	noUpdatedDpls := make(map[string]appv1alpha1.Deployable)
+
+	var expectecdDataRoot = make(map[string]interface{})
+	expectecdDataRoot["purpose"] = "test"
+
+	var expectecdDataManaged = make(map[string]interface{})
+	expectecdDataManaged["purpose"] = "rolling update"
+
+	for _, dpl := range dpllist.Items {
+		expgenname := rollingConfigmapDpl.GetName() + "-"
+
+		if dpl.Namespace != "default" && dpl.GetGenerateName() != expgenname {
+			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
+		}
+
+		//verify template override on managed clusters by the given rollingupdate-target in the parent deployable.
+		if dpl.Namespace == "default" {
+			template := &unstructured.Unstructured{}
+			json.Unmarshal(dpl.Spec.Template.Raw, template)
+
+			if !reflect.DeepEqual(expectecdDataRoot, template.Object["data"]) {
+				t.Errorf("Incorrect deployable rolling update. expected data: %#v, actual data: %#v", expectecdDataRoot, template.Object["data"])
+			}
+		} else {
+			template := &unstructured.Unstructured{}
+			json.Unmarshal(dpl.Spec.Template.Raw, template)
+
+			if dpl.Status.Phase == "" {
+				if !reflect.DeepEqual(expectecdDataManaged, template.Object["data"]) {
+					t.Errorf("Incorrect deployable rolling update. expected data: %#v, actual data: %#v", expectecdDataManaged, template.Object["data"])
+				}
+				updatedDpls[dpl.Namespace] = dpl
+			} else {
+				noUpdatedDpls[dpl.Namespace] = dpl
+			}
+		}
+	}
+
+	if len(updatedDpls) != 3 {
+		t.Errorf("3 deployables should be rolling updated this time. Actual updated dpl number: %v, dpls: %#v", len(updatedDpls), updatedDpls)
+	}
+
+	// continue to set up 1 out of the 3 updted dpls to "Deploy" status.
+	// 3 deployables are still expected to rolling update, but there is a new deploayble coming
+
+	newUpdatedDpl := appv1alpha1.Deployable{}
+	for _, dpl := range updatedDpls {
+		newUpdatedDpl = dpl
+		break
+	}
+
+	newUpdatedDpl.Status.Phase = "Deployed"
+	now := metav1.Now()
+	newUpdatedDpl.Status.LastUpdateTime = &now
+	err = c.Status().Update(context.TODO(), &newUpdatedDpl)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+
+	time.Sleep(2 * time.Second)
+
+	dpllist = &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	newUpdatedDpls := make(map[string]appv1alpha1.Deployable)
+
+	for _, dpl := range dpllist.Items {
+		expgenname := rollingConfigmapDpl.GetName() + "-"
+
+		if dpl.Namespace != "default" && dpl.GetGenerateName() != expgenname {
+			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
+		}
+
+		//verify template override on managed clusters by the given rollingupdate-target in the parent deployable.
+		if dpl.Namespace != "default" {
+			template := &unstructured.Unstructured{}
+			json.Unmarshal(dpl.Spec.Template.Raw, template)
+
+			var expectecdData = make(map[string]interface{})
+			expectecdData["purpose"] = "rolling update"
+
+			if dpl.Status.Phase == "" {
+				newUpdatedDpls[dpl.Namespace] = dpl
+			}
+		}
+	}
+
+	newNum := 0
+	existingNum := 0
+
+	for dplkey := range newUpdatedDpls {
+		if _, ok := updatedDpls[dplkey]; ok {
+			existingNum++
+		} else {
+			newNum++
+		}
+	}
+
+	if newNum != 1 {
+		t.Errorf("Incorrect rolling update. old dpls: %v, new dpls: %v", getMapkey(updatedDpls), getMapkey(newUpdatedDpls))
+	}
+}
+
+func getMapkey(dplMap map[string]appv1alpha1.Deployable) string {
+	keys := []string{}
+
+	for k := range dplMap {
+		keys = append(keys, k)
+	}
+
+	return strings.Join(keys, ",")
 }
