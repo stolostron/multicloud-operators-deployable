@@ -12,11 +12,11 @@ spec:
       labels:
         name: multicloud-operators-deployable
     spec:
-      serviceAccountName: multicloud-operators-deployable
+      serviceAccountName: multicloud-operators
       containers:
         - name: multicloud-operators-deployable
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: quay.io/multicloudlab/multicloud-operators-deployable
           command:
           - multicloud-operators-deployable
           imagePullPolicy: Always
