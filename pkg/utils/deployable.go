@@ -85,6 +85,48 @@ var DeployablePredicateFunc = predicate.Funcs{
 	},
 }
 
+// CompareDeployable compare two deployables and return true if they are equal.
+func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deployable) bool {
+	if !reflect.DeepEqual(newdpl.GetAnnotations(), olddpl.GetAnnotations()) {
+		return false
+	}
+
+	if !reflect.DeepEqual(newdpl.GetLabels(), olddpl.GetLabels()) {
+		return false
+	}
+
+	oldtmpl := &unstructured.Unstructured{}
+	newtmpl := &unstructured.Unstructured{}
+
+	if olddpl.Spec.Template == nil || olddpl.Spec.Template.Raw == nil {
+		return false
+	}
+
+	err := json.Unmarshal(olddpl.Spec.Template.Raw, oldtmpl)
+	if err != nil {
+		return false
+	}
+
+	if newdpl.Spec.Template.Raw == nil {
+		return false
+	}
+
+	err = json.Unmarshal(newdpl.Spec.Template.Raw, newtmpl)
+	if err != nil {
+		return false
+	}
+
+	if !reflect.DeepEqual(newtmpl, oldtmpl) {
+		return false
+	}
+
+	tmpdpl := olddpl.DeepCopy()
+
+	tmpdpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
+
+	return reflect.DeepEqual(tmpdpl.Spec, newdpl.Spec)
+}
+
 // PrepareInstance prepares the deployable instane for later actions
 func PrepareInstance(instance *appv1alpha1.Deployable) bool {
 	if klog.V(QuiteLogLel) {

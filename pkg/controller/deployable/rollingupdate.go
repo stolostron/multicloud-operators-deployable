@@ -44,6 +44,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		return nil
 	}
 
+	// maxunav is the actual updated number in every rolling update
 	maxunav, err := strconv.Atoi(annotations[appv1alpha1.AnnotationRollingUpdateMaxUnavailable])
 	if err != nil {
 		maxunav = appv1alpha1.DefaultRollingUpdateMaxUnavailablePercentage
@@ -70,7 +71,10 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 
 		ov := appv1alpha1.Overrides{}
 
-		ov.ClusterOverrides = utils.GenerateOverrides(instance, targetdpl)
+		// target dpl becomes new instnace template for propagation.
+		// So instance Overrides stores all clusters who are not eligible to update now.
+		// When the whole rolling update is done, the instance Overrides array should be zero element.
+		ov.ClusterOverrides = utils.GenerateOverrides(targetdpl, instance)
 
 		covmap := make(map[string]appv1alpha1.Overrides)
 
