@@ -17,7 +17,6 @@ package deployable
 import (
 	"context"
 	"encoding/json"
-	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -93,22 +92,18 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 		instance.Status.PropagatedStatus[cluster.Name] = &appv1alpha1.ResourceUnitStatus{}
 		ifRecordEvent = true
 	} else {
-		if !reflect.DeepEqual(original, existingdeployable) {
+		if !utils.CompareDeployable(original, existingdeployable) {
 			klog.Info("Updating existing local deployable: ", existingdeployable)
 			err = r.Update(context.TODO(), existingdeployable)
 			if err == nil {
-				covs, _ := utils.PrepareOverrides(cluster, instance)
-				// Only if there is no override for this cluster, the deployable will be updated. need to reset its status
-				if covs == nil {
-					newDpl := existingdeployable.DeepCopy()
-					newDpl.Status.Phase = ""
-					newDpl.Status.Message = ""
-					newDpl.Status.Reason = ""
-					newDpl.Status.ResourceStatus = nil
-					now := metav1.Now()
-					newDpl.Status.LastUpdateTime = &now
-					err = r.Status().Update(context.TODO(), newDpl)
-				}
+				newDpl := existingdeployable.DeepCopy()
+				newDpl.Status.Phase = ""
+				newDpl.Status.Message = ""
+				newDpl.Status.Reason = ""
+				newDpl.Status.ResourceStatus = nil
+				now := metav1.Now()
+				newDpl.Status.LastUpdateTime = &now
+				err = r.Status().Update(context.TODO(), newDpl)
 			}
 
 			instance.Status.PropagatedStatus[cluster.Name] = &appv1alpha1.ResourceUnitStatus{}
