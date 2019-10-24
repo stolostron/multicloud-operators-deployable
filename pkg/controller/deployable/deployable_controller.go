@@ -344,6 +344,12 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 		instance.Status.Message = ""
 	}
 
+	err = r.Update(context.TODO(), instance)
+	if err != nil {
+		klog.Error("Error returned when updating instance:", err, "instance:", instance)
+		return reconcile.Result{}, err
+	}
+
 	// reconcile finished check if need to upadte the resource
 	if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
 		if !reflect.DeepEqual(savedStatus, &(instance.Status)) {

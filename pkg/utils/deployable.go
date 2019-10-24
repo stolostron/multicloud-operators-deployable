@@ -120,9 +120,11 @@ func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deplo
 		return false
 	}
 
-	olddpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
+	tmpdpl := olddpl.DeepCopy()
 
-	return reflect.DeepEqual(olddpl.Spec, newdpl.Spec)
+	tmpdpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
+
+	return reflect.DeepEqual(tmpdpl.Spec, newdpl.Spec)
 }
 
 // PrepareInstance prepares the deployable instane for later actions

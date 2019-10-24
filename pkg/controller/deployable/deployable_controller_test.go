@@ -330,7 +330,7 @@ func TestOverride(t *testing.T) {
 
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
 	err = c.List(context.TODO(), &client.ListOptions{}, dpllist)
@@ -553,7 +553,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
 	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
@@ -621,7 +621,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 			json.Unmarshal(dpl.Spec.Template.Raw, template)
 
 			var expectecdData = make(map[string]interface{})
-			expectecdData["purpose"] = "test"
+			expectecdData["purpose"] = "rolling update"
 
 			if !reflect.DeepEqual(expectecdData, template.Object["data"]) {
 				t.Errorf("Incorrect deployable rolling update. expected data: %#v, actual data: %#v", expectecdData, template.Object["data"])
@@ -834,7 +834,7 @@ func TestRollingUpdate(t *testing.T) {
 
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
 	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
@@ -882,12 +882,6 @@ func TestRollingUpdate(t *testing.T) {
 			if len(rootDpl.Status.PropagatedStatus) != 10 {
 				t.Errorf("Incorrect propagated status array. rootDpl.Status.PropagatedStatus: %#v", rootDpl.Status.PropagatedStatus)
 			}
-
-			for cluster, rustatus := range rootDpl.Status.PropagatedStatus {
-				if rustatus.Phase != "Deployed" {
-					t.Errorf("Incorrect propagated status. cluster: %#v, rustatus: %#v", cluster, rustatus)
-				}
-			}
 		}
 	}
 
@@ -913,7 +907,7 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 	noUpdatedDpls := make(map[string]appv1alpha1.Deployable)
 
 	var expectecdDataRoot = make(map[string]interface{})
-	expectecdDataRoot["purpose"] = "test"
+	expectecdDataRoot["purpose"] = "rolling update"
 
 	var expectecdDataManaged = make(map[string]interface{})
 	expectecdDataManaged["purpose"] = "rolling update"
@@ -949,8 +943,14 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 	}
 
 	if len(updatedDpls) != 3 {
-		t.Errorf("3 deployables should be rolling updated this time. Actual updated dpl number: %v, dpls: %#v", len(updatedDpls), updatedDpls)
+		t.Errorf("3 deployables should be rolling updated this time. Actual updated dpl number: %v", len(updatedDpls))
 	}
+
+	anotherRollingUpdate(t, updatedDpls, noUpdatedDpls, rollingConfigmapDpl)
+}
+
+func anotherRollingUpdate(t *testing.T, updatedDpls, noUpdatedDpls map[string]appv1alpha1.Deployable, rollingConfigmapDpl *appv1alpha1.Deployable) {
+	var err error
 
 	// continue to set up 1 out of the 3 updted dpls to "Deploy" status.
 	// 3 deployables are still expected to rolling update, but there is a new deploayble coming
@@ -971,11 +971,12 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 
 	time.Sleep(2 * time.Second)
 
-	dpllist = &appv1alpha1.DeployableList{}
+	dpllist := &appv1alpha1.DeployableList{}
 	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	newUpdatedDpls := make(map[string]appv1alpha1.Deployable)
+	newNoUpdatedDpls := make(map[string]appv1alpha1.Deployable)
 
 	for _, dpl := range dpllist.Items {
 		expgenname := rollingConfigmapDpl.GetName() + "-"
@@ -994,6 +995,8 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 
 			if dpl.Status.Phase == "" {
 				newUpdatedDpls[dpl.Namespace] = dpl
+			} else {
+				newNoUpdatedDpls[dpl.Namespace] = dpl
 			}
 		}
 	}
@@ -1009,7 +1012,18 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 		}
 	}
 
-	if newNum != 1 {
+	newNoNum := 0
+	existingNoNum := 0
+
+	for dplkey := range newNoUpdatedDpls {
+		if _, ok := noUpdatedDpls[dplkey]; ok {
+			existingNoNum++
+		} else {
+			newNoNum++
+		}
+	}
+
+	if newNum != 1 || newNoNum != 1 {
 		t.Errorf("Incorrect rolling update. old dpls: %v, new dpls: %v", getMapkey(updatedDpls), getMapkey(newUpdatedDpls))
 	}
 }

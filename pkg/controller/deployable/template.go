@@ -188,6 +188,9 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 
 	localAnnotations[appv1alpha1.AnnotationHosting] = realhosting.String()
 
+	//delete rollingupdate target annotation anyway. it is not required to be deployed to managed clusters.
+	delete(localAnnotations, appv1alpha1.AnnotationRollingUpdateTarget)
+
 	localdeployable.SetAnnotations(localAnnotations)
 
 	localLabels := localdeployable.GetLabels()
