@@ -101,4 +101,14 @@ Use the following kubectl command to launch operator as a deployment in a Kubern
 % kubectl deploy -f deploy
 ```
 
-Verify that f
+Verify the deployment and pods with following command:
+
+```shell
+% kubectl get deploy,pods -l name=multicloud-operators-deployable
+NAME                                              READY     UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/multicloud-operators-deployable   1/1       1            1           15m
+
+NAME                                                   READY     STATUS    RESTARTS   AGE
+pod/multicloud-operators-deployable-78c9874dff-f64pg   1/1       Running   0          15m
+
+```

@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: multicloud-operators-deployable
+  labels:
+    name: multicloud-operators-deployable
 spec:
   replicas: 1
   selector:
