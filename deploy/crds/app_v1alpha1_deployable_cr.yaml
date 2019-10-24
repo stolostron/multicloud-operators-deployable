@@ -1,7 +1,0 @@
-apiVersion: app.ibm.com/v1alpha1
-kind: Deployable
-metadata:
-  name: example-deployable
-spec:
-  # Add fields here
-  size: 3

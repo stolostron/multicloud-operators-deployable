@@ -86,8 +86,12 @@ spec:
                     properties:
                       name:
                         type: string
+                    required:
+                    - name
                     type: object
                   type: array
+                local:
+                  type: boolean
                 placementRef:
                   type: object
               type: object
