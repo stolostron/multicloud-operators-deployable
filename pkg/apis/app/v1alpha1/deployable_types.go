@@ -61,9 +61,9 @@ var (
 // Dependency of Deployable
 // Properties field is the flexiblity for different Kind
 type Dependency struct {
-	corev1.ObjectReference
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	corev1.ObjectReference `json:",inline"`
+	Annotations            map[string]string `json:"annotations,omitempty"`
+	Labels                 map[string]string `json:"labels,omitempty"`
 }
 
 // Cluster is object with name field only to specify cluster
