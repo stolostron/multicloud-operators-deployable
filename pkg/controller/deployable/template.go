@@ -133,7 +133,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 			}
 
 			addtionalMsg = "Propagate " + eventObj + " " + dplkey.String() + " for cluster " + cluster.String()
-			r.eventRecorder.RecordEvent(r.eventRecorder, hostDeployable, "Deploy", addtionalMsg, err)
+			r.eventRecorder.RecordEvent(hostDeployable, "Deploy", addtionalMsg, err)
 		}
 	}
 

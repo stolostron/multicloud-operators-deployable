@@ -66,7 +66,6 @@ type EventRecorder struct {
 // NewEventRecorder - create new event recorder from rect config
 func NewEventRecorder(cfg *rest.Config, scheme *apiruntime.Scheme) (*EventRecorder, error) {
 	reccs, err := kubernetes.NewForConfig(cfg)
-
 	if err != nil {
 		klog.Error("Failed to new clientset for event recorder. err: ", err)
 		return nil, err
@@ -77,13 +76,13 @@ func NewEventRecorder(cfg *rest.Config, scheme *apiruntime.Scheme) (*EventRecord
 	eventBroadcaster.StartLogging(klog.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: reccs.CoreV1().Events("")})
 
-	rec.EventRecorder = eventBroadcaster.NewRecorder(scheme, corev1.EventSource{Component: "deployable"})
+	rec.EventRecorder = eventBroadcaster.NewRecorder(scheme, corev1.EventSource{Component: "subscription"})
 
 	return rec, nil
 }
 
 // RecordEvent - record kuberentes event
-func (rec *EventRecorder) RecordEvent(eventrecorder record.EventRecorder, obj apiruntime.Object, reason, msg string, err error) {
+func (rec *EventRecorder) RecordEvent(obj apiruntime.Object, reason, msg string, err error) {
 	eventType := corev1.EventTypeNormal
 	evnetMsg := msg
 
@@ -91,5 +90,5 @@ func (rec *EventRecorder) RecordEvent(eventrecorder record.EventRecorder, obj ap
 		eventType = corev1.EventTypeWarning
 	}
 
-	eventrecorder.Event(obj, eventType, reason, evnetMsg)
+	rec.EventRecorder.Event(obj, eventType, reason, evnetMsg)
 }

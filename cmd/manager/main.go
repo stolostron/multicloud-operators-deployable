@@ -18,6 +18,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"github.com/spf13/pflag"
 
@@ -37,5 +38,5 @@ func main() {
 
 	pflag.Parse()
 
-	exec.RunManager()
+	exec.RunManager(signals.SetupSignalHandler())
 }
