@@ -56,7 +56,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 					err = r.Delete(context.TODO(), dpl)
 
 					addtionalMsg := "Delete propogated Deployable " + dplkey.String()
-					r.eventRecorder.RecordEvent(r.eventRecorder, instance, "Delete", addtionalMsg, err)
+					r.eventRecorder.RecordEvent(instance, "Delete", addtionalMsg, err)
 				}
 			}
 		}
@@ -122,7 +122,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 		err = r.Delete(context.TODO(), dpl)
 
 		addtionalMsg := "Delete Expired Deployable " + dplkey.String()
-		r.eventRecorder.RecordEvent(r.eventRecorder, instance, "Delete", addtionalMsg, err)
+		r.eventRecorder.RecordEvent(instance, "Delete", addtionalMsg, err)
 
 		if err != nil {
 			klog.Error("Failed to delete local deployable ", dpl.GetNamespace(), "/", dpl.GetName(), ":", err, "skipping")

@@ -39,7 +39,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	"k8s.io/klog"
 )
@@ -57,7 +56,7 @@ func printVersion() {
 	klog.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
-func RunManager() {
+func RunManager(sig <-chan struct{}) {
 	printVersion()
 
 	// Get a config to talk to the apiserver
@@ -141,7 +140,7 @@ func RunManager() {
 	klog.Info("Starting the Cmd.")
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(sig); err != nil {
 		klog.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
