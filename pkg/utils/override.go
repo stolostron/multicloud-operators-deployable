@@ -30,15 +30,38 @@ import (
 )
 
 // GenerateOverrides compare 2 deployable and generate array for overrides
-func GenerateOverrides(src, dst *appv1alpha1.Deployable) []appv1alpha1.ClusterOverride {
+func GenerateOverrides(src, dst *appv1alpha1.Deployable) (covs []appv1alpha1.ClusterOverride) {
+	defer func() {
+		if r := recover(); r != nil {
+			klog.V(5).Infof("Failed to make patch between the source and target deployables: r: %v", r)
+
+			ovmap := make(map[string]interface{})
+			ovmap["path"] = "."
+			ovmap["value"] = dst.Spec.Template.DeepCopy()
+
+			patchb, err := json.Marshal(ovmap)
+
+			if err != nil {
+				klog.Info("Error in marshal target target subscription template spec.packageOverride ", ovmap, " with error:", err)
+				covs = append(covs, appv1alpha1.ClusterOverride{})
+			} else {
+				clusterOverride := appv1alpha1.ClusterOverride{
+					RawExtension: runtime.RawExtension{
+						Raw: patchb,
+					},
+				}
+
+				covs = append(covs, clusterOverride)
+			}
+		}
+	}()
+
 	if klog.V(QuiteLogLel) {
 		fnName := GetFnName()
 		klog.Infof("Entering: %v()", fnName)
 
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
-
-	var covs []appv1alpha1.ClusterOverride
 
 	klog.V(10).Info("Start Generating patch. Src Template:", string(src.Spec.Template.Raw), " dst:", string(dst.Spec.Template.Raw))
 
@@ -82,7 +105,7 @@ func GenerateOverrides(src, dst *appv1alpha1.Deployable) []appv1alpha1.ClusterOv
 		covs = append(covs, appv1alpha1.ClusterOverride{RawExtension: runtime.RawExtension{Raw: patchb}})
 	}
 
-	klog.V(10).Info("Got clusteroverrides ", covs)
+	klog.V(5).Info("Got clusteroverrides ", covs)
 
 	return covs
 }

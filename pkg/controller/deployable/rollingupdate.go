@@ -16,16 +16,12 @@ package deployable
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"strconv"
 
 	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
 	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
-	subv1alpha1 "github.com/IBM/multicloud-operators-subscription/pkg/apis/app/v1alpha1"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 )
@@ -70,14 +66,6 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		return nil
 	}
 
-	targetSubTplPackageOverrides, err := handleSubscriptionPackageOverrides(instance, targetdpl)
-
-	if err != nil {
-		return nil
-	}
-
-	packageOverrides := getPackageOverrides(targetSubTplPackageOverrides)
-
 	//it is only triggered in the initial rolling update.
 	if !reflect.DeepEqual(instance.Spec.Template, targetdpl.Spec.Template) {
 		klog.V(5).Info("Initialize rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
@@ -105,14 +93,6 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 
 		maxunav -= len(targetdpl.Spec.Overrides)
 
-		// append target subscription template spec.packageOverrides to cluster overrides
-		for _, packageOverride := range packageOverrides {
-			for cluster, clusterOv := range covmap {
-				clusterOv.ClusterOverrides = append(clusterOv.ClusterOverrides, packageOverride)
-				covmap[cluster] = clusterOv
-			}
-		}
-
 		instance.Spec.Overrides = nil
 		for _, ov := range covmap {
 			instance.Spec.Overrides = append(instance.Spec.Overrides, *(ov.DeepCopy()))
@@ -124,14 +104,6 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 	for _, cs := range instance.Status.PropagatedStatus {
 		if cs.Phase != appv1alpha1.DeployableDeployed {
 			maxunav--
-		}
-	}
-
-	//append the target subscription template spec.packageOverrides to target cluster override as well
-	for _, packageOverride := range packageOverrides {
-		for ovindex, clusterOv := range targetdpl.Spec.Overrides {
-			clusterOv.ClusterOverrides = append(clusterOv.ClusterOverrides, packageOverride)
-			targetdpl.Spec.Overrides[ovindex] = clusterOv
 		}
 	}
 
@@ -167,88 +139,6 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 	klog.V(5).Info("Rolling update exit with overrides: ", instance.Spec.Overrides)
 
 	return nil
-}
-
-func getPackageOverrides(targetSubTplPackageOverrides []*subv1alpha1.Overrides) []appv1alpha1.ClusterOverride {
-	packageOverrides := []appv1alpha1.ClusterOverride{}
-
-	for _, targetPkgOv := range targetSubTplPackageOverrides {
-		ovmap := make(map[string]interface{})
-		ovmap["path"] = "spec.packageOverrides"
-		ovmap["value"] = targetPkgOv
-
-		patchb, err := json.Marshal(ovmap)
-
-		if err != nil {
-			klog.Info("Error in marshal target target subscription template spec.packageOverride ", ovmap, " with error:", err)
-			continue
-		}
-
-		clusterOverride := appv1alpha1.ClusterOverride{
-			RawExtension: runtime.RawExtension{
-				Raw: patchb,
-			},
-		}
-
-		packageOverrides = append(packageOverrides, clusterOverride)
-	}
-
-	return packageOverrides
-}
-
-// if the dpl template is subscription containing PackageOverrides slice,
-// copy over the instance template PackageOverrides with the target template PackageOverrides
-// As a result, the Spec.PackageOverrides in instance dpl and target dpl are cleaned up to avoid array patch diff panic
-// Also the target Spec.PackageOverrides is returned which will be appended to all cluster overrides later.
-func handleSubscriptionPackageOverrides(instance, targetdpl *appv1alpha1.Deployable) ([]*subv1alpha1.Overrides, error) {
-	org := &unstructured.Unstructured{}
-	err := json.Unmarshal(instance.Spec.Template.Raw, org)
-
-	if err != nil {
-		klog.V(5).Info("Error in unmarshall instance template, err:", err, " |template: ", string(instance.Spec.Template.Raw))
-		return nil, nil
-	}
-
-	if org.GetKind() != "Subscription" {
-		return nil, nil
-	}
-
-	targetSubTpl := &subv1alpha1.Subscription{}
-	err = json.Unmarshal(targetdpl.Spec.Template.Raw, targetSubTpl)
-
-	if err != nil {
-		klog.V(5).Info("Error in unmarshal target template, err:", err, " |template: ", string(targetdpl.Spec.Template.Raw))
-		return nil, err
-	}
-
-	targetSubTplPackageOverrides := targetSubTpl.Spec.PackageOverrides
-	targetSubTpl.Spec.PackageOverrides = nil
-
-	targetdpl.Spec.Template.Raw, err = json.Marshal(targetSubTpl)
-
-	if err != nil {
-		klog.V(5).Info("Error in marshal target template, err:", err, " |template: ", string(targetdpl.Spec.Template.Raw))
-		return nil, err
-	}
-
-	instanceSubTpl := &subv1alpha1.Subscription{}
-	err = json.Unmarshal(instance.Spec.Template.Raw, instanceSubTpl)
-
-	if err != nil {
-		klog.V(5).Info("Error in unmarshal instance template, err:", err, " |template: ", string(instance.Spec.Template.Raw))
-		return nil, err
-	}
-
-	instanceSubTpl.Spec.PackageOverrides = nil
-
-	instance.Spec.Template.Raw, err = json.Marshal(instanceSubTpl)
-
-	if err != nil {
-		klog.V(5).Info("Error in marshal instance template, err:", err, " |template: ", string(instance.Spec.Template.Raw))
-		return nil, err
-	}
-
-	return targetSubTplPackageOverrides, nil
 }
 
 func (r *ReconcileDeployable) validateOverridesForRollingUpdate(instance *appv1alpha1.Deployable) {
