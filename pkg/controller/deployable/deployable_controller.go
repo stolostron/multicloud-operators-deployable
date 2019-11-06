@@ -83,7 +83,7 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 
 	dplList := &appv1alpha1.DeployableList{}
 	listopts := &client.ListOptions{}
-	err := mapper.List(context.TODO(), listopts, dplList)
+	err := mapper.List(context.TODO(), dplList, listopts)
 
 	if err != nil {
 		klog.Error("Failed to list deployables for placementrule mapper with error:", err)
@@ -136,7 +136,7 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 	dplList := &appv1alpha1.DeployableList{}
 
 	listopts := &client.ListOptions{}
-	err := mapper.List(context.TODO(), listopts, dplList)
+	err := mapper.List(context.TODO(), dplList, listopts)
 
 	if err != nil {
 		klog.Error("Failed to list deployables for cluster mapper with error:", err)
@@ -254,7 +254,7 @@ func (mapper *deployableMapper) Map(obj handler.MapObject) []reconcile.Request {
 	// list thing for rolling update check
 	dplList := &appv1alpha1.DeployableList{}
 	listopts := &client.ListOptions{Namespace: obj.Meta.GetNamespace()}
-	err := mapper.List(context.TODO(), listopts, dplList)
+	err := mapper.List(context.TODO(), dplList, listopts)
 
 	if err != nil {
 		klog.Error("Listing deployables in mapper and got error:", err)

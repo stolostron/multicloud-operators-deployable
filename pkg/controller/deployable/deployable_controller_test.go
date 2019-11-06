@@ -104,7 +104,7 @@ func TestReconcile(t *testing.T) {
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
 
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: "0"})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c = mgr.GetClient()
@@ -140,7 +140,7 @@ func TestReconcile(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	for _, dpl := range dpllist.Items {
@@ -157,7 +157,7 @@ func TestPropagate(t *testing.T) {
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
 
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: "0"})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c = mgr.GetClient()
@@ -215,7 +215,7 @@ func TestPropagate(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{Namespace: endpoint1.GetNamespace()}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{Namespace: endpoint1.GetNamespace()})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(dpllist.Items) != 1 {
@@ -245,7 +245,7 @@ func TestPropagate(t *testing.T) {
 		time.Sleep(2 * time.Second)
 
 		dpllist = &appv1alpha1.DeployableList{}
-		err = c.List(context.TODO(), &client.ListOptions{Namespace: endpoint1.GetNamespace()}, dpllist)
+		err = c.List(context.TODO(), dpllist, &client.ListOptions{Namespace: endpoint1.GetNamespace()})
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 
 		if len(dpllist.Items) != 0 {
@@ -262,7 +262,7 @@ func TestOverride(t *testing.T) {
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
 
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: "0"})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c = mgr.GetClient()
@@ -333,7 +333,7 @@ func TestOverride(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(dpllist.Items) != 3 {
@@ -416,7 +416,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
 
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: "0"})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c = mgr.GetClient()
@@ -451,7 +451,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	nslist := &corev1.NamespaceList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, nslist)
+	err = c.List(context.TODO(), nslist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(nslist.Items) != 1 {
@@ -556,7 +556,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(dpllist.Items) != 2 {
@@ -581,7 +581,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist = &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	rootDpl := &appv1alpha1.Deployable{}
@@ -605,7 +605,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist = &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	for _, dpl := range dpllist.Items {
@@ -771,7 +771,7 @@ func TestRollingUpdate(t *testing.T) {
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
 
-	mgr, err := manager.New(cfg, manager.Options{})
+	mgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: "0"})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	c = mgr.GetClient()
@@ -810,7 +810,7 @@ func TestRollingUpdate(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	nslist := &corev1.NamespaceList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, nslist)
+	err = c.List(context.TODO(), nslist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(nslist.Items) != 10 {
@@ -837,7 +837,7 @@ func TestRollingUpdate(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(dpllist.Items) != 11 {
@@ -866,7 +866,7 @@ func TestRollingUpdate(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist = &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	rootDpl := &appv1alpha1.Deployable{}
@@ -900,7 +900,7 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	updatedDpls := make(map[string]appv1alpha1.Deployable)
@@ -972,7 +972,7 @@ func anotherRollingUpdate(t *testing.T, updatedDpls, noUpdatedDpls map[string]ap
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), &client.ListOptions{LabelSelector: clSelector}, dpllist)
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{LabelSelector: clSelector})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	newUpdatedDpls := make(map[string]appv1alpha1.Deployable)

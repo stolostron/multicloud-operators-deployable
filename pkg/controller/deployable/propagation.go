@@ -159,7 +159,7 @@ func (r *ReconcileDeployable) getDeployableFamily(instance *appv1alpha1.Deployab
 	exlabel := make(map[string]string)
 	// Label does not support "/" for NamespacedName, let get by name first and filter by annotation later
 	exlabel[appv1alpha1.PropertyHostingDeployableName] = instance.GetName()
-	err := r.List(context.TODO(), client.MatchingLabels(exlabel), exlist)
+	err := r.List(context.TODO(), exlist, client.MatchingLabels(exlabel))
 
 	if err != nil && !errors.IsNotFound(err) {
 		klog.Error("Trying to list existing deployabe ", instance.GetNamespace(), "/", instance.GetName(), " with error:", err)
@@ -206,7 +206,7 @@ func getDeployableTrueKey(dpl *appv1alpha1.Deployable) string {
 func (r *ReconcileDeployable) validateDeployables() error {
 	deployablelist := &appv1alpha1.DeployableList{}
 	listopts := &client.ListOptions{}
-	err := r.List(context.TODO(), listopts, deployablelist)
+	err := r.List(context.TODO(), deployablelist, listopts)
 
 	if err != nil {
 		klog.Error("Failed to obtain deployable list")
