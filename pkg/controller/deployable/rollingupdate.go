@@ -40,7 +40,11 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 
 	if annotations == nil || annotations[appv1alpha1.AnnotationRollingUpdateTarget] == "" {
 		klog.V(5).Info("Empty annotation or No rolling update target in annotations", annotations)
+		return nil
+	}
 
+	if len(instance.Status.PropagatedStatus) == 0 {
+		klog.V(5).Info(" No propagated clusters for rolling update", annotations)
 		return nil
 	}
 

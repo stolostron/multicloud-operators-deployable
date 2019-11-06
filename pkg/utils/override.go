@@ -167,11 +167,15 @@ func OverrideTemplate(template *unstructured.Unstructured, overrides []appv1alph
 			return nil, errors.New("can not convert path of override")
 		}
 
-		fields := strings.Split(path, ".")
-		err = unstructured.SetNestedField(ovt.Object, ovuobj["value"], fields...)
+		if path == "." {
+			ovt.Object = ovuobj["value"].(map[string]interface{})
+		} else {
+			fields := strings.Split(path, ".")
+			err = unstructured.SetNestedField(ovt.Object, ovuobj["value"], fields...)
 
-		if err != nil {
-			klog.V(5).Info("Error in setting nested field", err)
+			if err != nil {
+				klog.V(5).Info("Error in setting nested field", err)
+			}
 		}
 	}
 
