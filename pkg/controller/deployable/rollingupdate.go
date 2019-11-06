@@ -34,13 +34,17 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
-	klog.V(10).Info("Rolling Updating ", instance)
+	klog.V(5).Info("Rolling Updating ", instance)
 
 	annotations := instance.GetAnnotations()
 
 	if annotations == nil || annotations[appv1alpha1.AnnotationRollingUpdateTarget] == "" {
-		klog.V(10).Info("Empty annotation or No rolling update target in annotations", annotations)
+		klog.V(5).Info("Empty annotation or No rolling update target in annotations", annotations)
+		return nil
+	}
 
+	if len(instance.Status.PropagatedStatus) == 0 {
+		klog.V(5).Info(" No propagated clusters for rolling update", annotations)
 		return nil
 	}
 
@@ -51,7 +55,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 	}
 
 	maxunav = (len(instance.Status.PropagatedStatus)*maxunav + 99) / 100
-	klog.V(10).Info("ongoing rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget], " with max ", maxunav, " unavaialble clusters")
+	klog.V(5).Info("ongoing rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget], " with max ", maxunav, " unavaialble clusters")
 
 	targetdpl := &appv1alpha1.Deployable{}
 	err = r.Get(context.TODO(),
@@ -66,8 +70,9 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		return nil
 	}
 
+	//it is only triggered in the initial rolling update.
 	if !reflect.DeepEqual(instance.Spec.Template, targetdpl.Spec.Template) {
-		klog.V(10).Info("Initialize rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
+		klog.V(5).Info("Initialize rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
 
 		ov := appv1alpha1.Overrides{}
 
@@ -135,7 +140,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		instance.Spec.Overrides = append(instance.Spec.Overrides, *(cov.DeepCopy()))
 	}
 
-	klog.V(10).Info("Rolling update exit with overrides: ", instance.Spec.Overrides)
+	klog.V(5).Info("Rolling update exit with overrides: ", instance.Spec.Overrides)
 
 	return nil
 }
@@ -148,12 +153,12 @@ func (r *ReconcileDeployable) validateOverridesForRollingUpdate(instance *appv1a
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
-	klog.V(10).Info("Rolling update validation started with overrides: ", instance.Spec.Overrides, "and status ", instance.Status.PropagatedStatus)
+	klog.V(5).Info("Rolling update validation started with overrides: ", instance.Spec.Overrides, "and status ", instance.Status.PropagatedStatus)
 
 	var allov []appv1alpha1.Overrides
 
 	for _, ov := range instance.Spec.Overrides {
-		klog.V(10).Info("validating overrides: ", ov)
+		klog.V(5).Info("validating overrides: ", ov)
 
 		if _, ok := instance.Status.PropagatedStatus[ov.ClusterName]; ok {
 			allov = append(allov, *(ov.DeepCopy()))
@@ -162,5 +167,5 @@ func (r *ReconcileDeployable) validateOverridesForRollingUpdate(instance *appv1a
 
 	instance.Spec.Overrides = allov
 
-	klog.V(10).Info("Rolling update validated overrides: ", instance.Spec.Overrides)
+	klog.V(5).Info("Rolling update validated overrides: ", instance.Spec.Overrides)
 }
