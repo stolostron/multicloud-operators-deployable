@@ -3,15 +3,14 @@ module github.com/IBM/multicloud-operators-deployable
 require (
 	github.com/IBM/multicloud-operators-placementrule v0.0.0-20191106021205-80eeda99597f
 	github.com/cameront/go-jsonpatch v0.0.0-20180223123257-a8710867776e
+	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
 	github.com/go-openapi/spec v0.19.0
-	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/onsi/gomega v1.5.0
 	github.com/operator-framework/operator-sdk v0.12.0
 	github.com/prometheus/common v0.4.1
 	github.com/spf13/pflag v1.0.3
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
-	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0

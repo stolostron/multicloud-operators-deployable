@@ -18,7 +18,7 @@ import (
 	"io/ioutil"
 	"reflect"
 
-	"gopkg.in/yaml.v2"
+	"github.com/ghodss/yaml"
 	crdv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	crdclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
