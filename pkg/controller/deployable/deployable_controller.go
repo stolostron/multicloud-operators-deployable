@@ -95,15 +95,6 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 			continue
 		}
 
-		annotations := dpl.GetAnnotations()
-		if annotations == nil || annotations[appv1alpha1.AnnotationManagedCluster] == "" {
-			continue
-		}
-
-		if annotations[appv1alpha1.AnnotationManagedCluster] != (types.NamespacedName{}).String() {
-			continue
-		}
-
 		// only reconcile it's own object
 		objkey := types.NamespacedName{
 			Name:      dpl.GetName(),
@@ -161,15 +152,6 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 			if !matched {
 				continue
 			}
-		}
-		// only reconcile it's own object
-		annotations := dpl.GetAnnotations()
-		if annotations == nil || annotations[appv1alpha1.AnnotationManagedCluster] == "" {
-			continue
-		}
-
-		if annotations[appv1alpha1.AnnotationManagedCluster] != (types.NamespacedName{}).String() {
-			continue
 		}
 
 		objkey := types.NamespacedName{
