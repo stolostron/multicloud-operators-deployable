@@ -321,10 +321,7 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 	newPropagatedStatus := make(map[string]*appv1alpha1.ResourceUnitStatus)
 
 	for k, v := range instance.Status.PropagatedStatus {
-		newResourceUnitStatus := &appv1alpha1.ResourceUnitStatus{}
-		newResourceUnitStatus = v
-
-		newPropagatedStatus[k] = newResourceUnitStatus
+		newPropagatedStatus[k] = v
 	}
 
 	// only update hub deployable. no need to update propagated deployable.
