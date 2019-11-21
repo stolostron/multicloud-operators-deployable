@@ -67,7 +67,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 	if err != nil {
 		klog.Info("Failed to find rolling update target", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
 
-		return nil
+		return err
 	}
 
 	//it is only triggered in the initial rolling update.

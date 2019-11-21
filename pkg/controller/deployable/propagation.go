@@ -43,21 +43,17 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	}
 
 	// actively delete children deployables when change from hub to local only
-	annotations := instance.GetAnnotations()
-
 	if len(instance.GetFinalizers()) > 0 || instance.Spec.Placement == nil {
-		if annotations[appv1alpha1.AnnotationManagedCluster] == (client.ObjectKey{}).String() {
-			for _, dpl := range children {
-				dplkey := types.NamespacedName{Namespace: dpl.GetNamespace(), Name: dpl.GetName()}
+		for _, dpl := range children {
+			dplkey := types.NamespacedName{Namespace: dpl.GetNamespace(), Name: dpl.GetName()}
 
-				klog.V(10).Info("As hub, deleting ", dpl.GetNamespace(), "/", dpl.GetName())
+			klog.V(5).Info("As hub, deleting ", dpl.GetNamespace(), "/", dpl.GetName())
 
-				if dpl.Namespace != instance.Namespace {
-					err = r.Delete(context.TODO(), dpl)
+			if dpl.Namespace != instance.Namespace {
+				err = r.Delete(context.TODO(), dpl)
 
-					addtionalMsg := "Delete propogated Deployable " + dplkey.String()
-					r.eventRecorder.RecordEvent(instance, "Delete", addtionalMsg, err)
-				}
+				addtionalMsg := "Delete propogated Deployable " + dplkey.String()
+				r.eventRecorder.RecordEvent(instance, "Delete", addtionalMsg, err)
 			}
 		}
 
@@ -79,11 +75,12 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 
 		if utils.GetClusterFromResourceObject(dpl).Name != "" {
 			instance.Status.PropagatedStatus[utils.GetClusterFromResourceObject(dpl).Name] = dpl.Status.ResourceUnitStatus.DeepCopy()
+			klog.V(5).Infof("child dpl cluster name: %v, unit status: %#v", utils.GetClusterFromResourceObject(dpl).Name, dpl.Status.ResourceUnitStatus.DeepCopy())
 		}
 	}
 	// instance itself does not expire anyway
 	delete(expireddeployablemap, getDeployableTrueKey(instance))
-	klog.V(10).Info("Existing deployables to check expiration:", expireddeployablemap)
+	klog.V(5).Info("Existing deployables to check expiration:", expireddeployablemap)
 
 	err = r.rollingUpdate(instance)
 
@@ -108,7 +105,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	}
 
 	// delete expired deployables
-	klog.V(10).Info("Expired deployables map:", expireddeployablemap)
+	klog.V(5).Info("Expired deployables map:", expireddeployablemap)
 
 	for _, dpl := range expireddeployablemap {
 		delete(instance.Status.PropagatedStatus, utils.GetClusterFromResourceObject(dpl).Name)
@@ -142,7 +139,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 
 	instance.Status.Phase = appv1alpha1.DeployablePropagated
 
-	klog.V(10).Info("Exit hub func with err:", err, "and instance status", instance.Status)
+	klog.V(5).Infof("Exit hub func with err: %v, and instance status: %#v", err, instance.Status)
 
 	return err
 }

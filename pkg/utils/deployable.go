@@ -88,10 +88,12 @@ var DeployablePredicateFunc = predicate.Funcs{
 // CompareDeployable compare two deployables and return true if they are equal.
 func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deployable) bool {
 	if !reflect.DeepEqual(newdpl.GetAnnotations(), olddpl.GetAnnotations()) {
+		klog.V(5).Infof("old annotation: %#v, new annotation: %#v", olddpl.GetAnnotations(), newdpl.GetAnnotations())
 		return false
 	}
 
 	if !reflect.DeepEqual(newdpl.GetLabels(), olddpl.GetLabels()) {
+		klog.V(5).Infof("old lael: %#v, new label: %#v", olddpl.GetLabels(), newdpl.GetLabels())
 		return false
 	}
 
@@ -117,6 +119,7 @@ func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deplo
 	}
 
 	if !reflect.DeepEqual(newtmpl, oldtmpl) {
+		klog.V(5).Infof("old template: %#v, new template: %#v", oldtmpl, newtmpl)
 		return false
 	}
 
@@ -124,7 +127,12 @@ func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deplo
 
 	tmpdpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
 
-	return reflect.DeepEqual(tmpdpl.Spec, newdpl.Spec)
+	if !reflect.DeepEqual(tmpdpl.Spec, newdpl.Spec) {
+		klog.V(5).Infof("old spec: %#v, new spec: %#v", tmpdpl.Spec, newdpl.Spec)
+		return false
+	}
+
+	return true
 }
 
 // PrepareInstance prepares the deployable instane for later actions
@@ -384,4 +392,11 @@ func ContainsName(a []types.NamespacedName, x string) bool {
 	}
 
 	return false
+}
+
+// PrintPropagatedStatus output Propagated Status for each cluster
+func PrintPropagatedStatus(r map[string]*appv1alpha1.ResourceUnitStatus, msg string) {
+	for cluster, unitStatus := range r {
+		klog.Infof("%v - cluster: %v, unit status: %#v", msg, cluster, unitStatus)
+	}
 }
