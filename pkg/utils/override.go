@@ -21,7 +21,7 @@ import (
 
 	jsonpatch "github.com/cameront/go-jsonpatch"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"

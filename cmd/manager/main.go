@@ -25,7 +25,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/IBM/multicloud-operators-deployable/cmd/manager/exec"
+	"github.com/open-cluster-management/multicloud-operators-deployable/cmd/manager/exec"
 )
 
 func main() {

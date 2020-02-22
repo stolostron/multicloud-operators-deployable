@@ -19,8 +19,8 @@ import (
 	"reflect"
 	"strconv"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
-	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"

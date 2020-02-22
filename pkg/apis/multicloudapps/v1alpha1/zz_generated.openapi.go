@@ -25,15 +25,16 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/kuanf/multicloud-operators-deployable/pkg/apis/app/v1alpha1.Deployable": schema_pkg_apis_app_v1alpha1_Deployable(ref),
+		"github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1.Deployable": schema_pkg_apis_multicloudapps_v1alpha1_Deployable(ref),
 	}
 }
 
-func schema_pkg_apis_app_v1alpha1_Deployable(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_multicloudapps_v1alpha1_Deployable(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "Deployable is the Schema for the deployables API",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -56,18 +57,18 @@ func schema_pkg_apis_app_v1alpha1_Deployable(ref common.ReferenceCallback) commo
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kuanf/multicloud-operators-deployable/pkg/apis/app/v1alpha1.DeployableSpec"),
+							Ref: ref("github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1.DeployableSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/kuanf/multicloud-operators-deployable/pkg/apis/app/v1alpha1.DeployableStatus"),
+							Ref: ref("github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1.DeployableStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kuanf/multicloud-operators-deployable/pkg/apis/app/v1alpha1.DeployableSpec", "github.com/kuanf/multicloud-operators-deployable/pkg/apis/app/v1alpha1.DeployableStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1.DeployableSpec", "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1.DeployableStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }

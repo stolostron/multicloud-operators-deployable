@@ -1,9 +1,9 @@
-apiVersion: app.ibm.com/v1alpha1
+apiVersion: multicloud-apps.io/v1alpha1
 kind: Deployable
 metadata:
   annotations:
-    app.ibm.com/rollingupdate-target: version-configmap
-    app.ibm.com/is-local-deployable: "false"
+    multicloud-apps.io/rollingupdate-target: version-configmap
+    multicloud-apps.io/is-local-deployable: "false"
   name: rollingupdate-configmap
   namespace: default
 spec:
