@@ -1,11 +1,11 @@
-module github.com/IBM/multicloud-operators-deployable
+module github.com/open-cluster-management/multicloud-operators-deployable
 
 require (
-	github.com/IBM/multicloud-operators-placementrule v0.0.0-20191106021205-80eeda99597f
 	github.com/cameront/go-jsonpatch v0.0.0-20180223123257-a8710867776e
 	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
 	github.com/go-openapi/spec v0.19.0
 	github.com/onsi/gomega v1.5.0
+	github.com/open-cluster-management/multicloud-operators-placementrule v0.0.0-20200221060829-23a78b442412
 	github.com/operator-framework/operator-sdk v0.12.0
 	github.com/prometheus/common v0.4.1
 	github.com/spf13/pflag v1.0.3

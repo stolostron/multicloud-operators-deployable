@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
 )
 
 // DeployablePredicateFunc defines predicate function for deployable watch in deployable controller
@@ -399,4 +399,14 @@ func PrintPropagatedStatus(r map[string]*appv1alpha1.ResourceUnitStatus, msg str
 	for cluster, unitStatus := range r {
 		klog.Infof("%v - cluster: %v, unit status: %#v", msg, cluster, unitStatus)
 	}
+}
+
+func InstanceDeepCopy(a, b interface{}) error {
+	byt, err := json.Marshal(a)
+
+	if err == nil {
+		err = json.Unmarshal(byt, b)
+	}
+
+	return err
 }
