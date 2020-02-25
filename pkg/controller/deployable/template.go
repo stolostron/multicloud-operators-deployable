@@ -204,6 +204,14 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	}
 
 	localLabels[appv1alpha1.PropertyHostingDeployableName] = realhosting.Name
+
+	//propagate subscription.pause label
+	if utils.GetPauseLabel(instance) {
+		localLabels[appv1alpha1.LabelSubscriptionPause] = "true"
+	} else {
+		localLabels[appv1alpha1.LabelSubscriptionPause] = "false"
+	}
+
 	localdeployable.SetLabels(localLabels)
 
 	covs, _ := utils.PrepareOverrides(*cluster, instance)

@@ -70,6 +70,13 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		return nil
 	}
 
+	//propagate subscription.pause label to rolling update target deployable subscription template
+	err = utils.SetPauseLabelDplSubTpl(instance, targetdpl)
+	if err != nil {
+		klog.Info("Failed to propagate pause label to target deployable subscription template. err:", err)
+		return err
+	}
+
 	//it is only triggered in the initial rolling update.
 	if !reflect.DeepEqual(instance.Spec.Template, targetdpl.Spec.Template) {
 		klog.V(5).Info("Initialize rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
