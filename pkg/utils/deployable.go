@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
 )
 
 // DeployablePredicateFunc defines predicate function for deployable watch in deployable controller
@@ -88,10 +88,12 @@ var DeployablePredicateFunc = predicate.Funcs{
 // CompareDeployable compare two deployables and return true if they are equal.
 func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deployable) bool {
 	if !reflect.DeepEqual(newdpl.GetAnnotations(), olddpl.GetAnnotations()) {
+		klog.V(5).Infof("old annotation: %#v, new annotation: %#v", olddpl.GetAnnotations(), newdpl.GetAnnotations())
 		return false
 	}
 
 	if !reflect.DeepEqual(newdpl.GetLabels(), olddpl.GetLabels()) {
+		klog.V(5).Infof("old lael: %#v, new label: %#v", olddpl.GetLabels(), newdpl.GetLabels())
 		return false
 	}
 
@@ -117,6 +119,7 @@ func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deplo
 	}
 
 	if !reflect.DeepEqual(newtmpl, oldtmpl) {
+		klog.V(5).Infof("old template: %#v, new template: %#v", oldtmpl, newtmpl)
 		return false
 	}
 
@@ -124,7 +127,12 @@ func CompareDeployable(olddpl *appv1alpha1.Deployable, newdpl *appv1alpha1.Deplo
 
 	tmpdpl.Spec.Template = newdpl.Spec.Template.DeepCopy()
 
-	return reflect.DeepEqual(tmpdpl.Spec, newdpl.Spec)
+	if !reflect.DeepEqual(tmpdpl.Spec, newdpl.Spec) {
+		klog.V(5).Infof("old spec: %#v, new spec: %#v", tmpdpl.Spec, newdpl.Spec)
+		return false
+	}
+
+	return true
 }
 
 // PrepareInstance prepares the deployable instane for later actions
@@ -386,7 +394,24 @@ func ContainsName(a []types.NamespacedName, x string) bool {
 	return false
 }
 
-// GetPauseLabel check if the subscription.pause label exists
+// PrintPropagatedStatus output Propagated Status for each cluster
+func PrintPropagatedStatus(r map[string]*appv1alpha1.ResourceUnitStatus, msg string) {
+	for cluster, unitStatus := range r {
+		klog.Infof("%v - cluster: %v, unit status: %#v", msg, cluster, unitStatus)
+	}
+}
+
+func InstanceDeepCopy(a, b interface{}) error {
+	byt, err := json.Marshal(a)
+
+	if err == nil {
+		err = json.Unmarshal(byt, b)
+	}
+
+	return err
+}
+
+// GetPauseLabel check if the subscription-pause label exists
 func GetPauseLabel(instance *appv1alpha1.Deployable) bool {
 	labels := instance.GetLabels()
 	if labels == nil {
@@ -400,14 +425,13 @@ func GetPauseLabel(instance *appv1alpha1.Deployable) bool {
 	return false
 }
 
-// SetPauseLabelDplSubTpl set the subscription.pause label to a deployable containing a subscription template
+// SetPauseLabelDplSubTpl set the subscription-pause label to a deployable containing a subscription template
 func SetPauseLabelDplSubTpl(instance, targetdpl *appv1alpha1.Deployable) error {
 	targetTpl := &unstructured.Unstructured{}
 
 	err := json.Unmarshal(targetdpl.Spec.Template.Raw, targetTpl)
 	if err != nil {
 		klog.Error("Failed to unmashal target deployable subscription template with error: ", err)
-
 		return err
 	}
 
@@ -427,6 +451,12 @@ func SetPauseLabelDplSubTpl(instance, targetdpl *appv1alpha1.Deployable) error {
 	}
 
 	targetTpl.SetLabels(targetTplLabels)
+
+	targetdpl.Spec.Template.Raw, err = json.Marshal(targetTpl)
+	if err != nil {
+		klog.Error("Error in mashalling targetTpl obj")
+		return err
+	}
 
 	return nil
 }

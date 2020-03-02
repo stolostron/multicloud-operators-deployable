@@ -24,8 +24,8 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
-	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
 )
 
 func (r *ReconcileDeployable) propagateDeployables(clusters []types.NamespacedName, instance *appv1alpha1.Deployable,
@@ -65,7 +65,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 
 	namespace := cluster.Namespace
 	// remove active clusters from expiration list
-	klog.V(10).Info("Creating Managed deployable:", instance, " in cluster:", cluster)
+	klog.V(5).Info("Creating Managed deployable:", instance, " in cluster:", cluster)
 
 	// create or update child deployable
 	truekey := types.NamespacedName{Name: instance.GetName() + "-", Namespace: namespace}.String()
@@ -82,7 +82,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 	ifRecordEvent := false
 
 	if !ok {
-		klog.V(10).Info("Creating new local deployable:", existingdeployable)
+		klog.V(5).Info("Creating new local deployable:", existingdeployable)
 		err = r.Create(context.TODO(), existingdeployable)
 
 		if instance.Status.PropagatedStatus == nil {
@@ -93,7 +93,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 		ifRecordEvent = true
 	} else {
 		if !utils.CompareDeployable(original, existingdeployable) {
-			klog.Info("Updating existing local deployable: ", existingdeployable)
+			klog.Info("Updating existing local deployable: ", existingdeployable.GetName())
 			err = r.Update(context.TODO(), existingdeployable)
 			if err == nil {
 				newDpl := existingdeployable.DeepCopy()
@@ -109,7 +109,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 			instance.Status.PropagatedStatus[cluster.Name] = &appv1alpha1.ResourceUnitStatus{}
 			ifRecordEvent = true
 		} else {
-			klog.V(10).Info("Same existing local deployable, no need to update. instance: ",
+			klog.V(5).Info("Same existing local deployable, no need to update. instance: ",
 				string(original.Spec.Template.Raw), " vs existing: ", string(existingdeployable.Spec.Template.Raw))
 		}
 	}
@@ -120,7 +120,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 		error1 := r.Get(context.TODO(), hosting, hostDeployable)
 
 		if error1 != nil {
-			klog.V(10).Info("hosting deployable not found, unable to record events to it. ", hosting)
+			klog.V(5).Info("hosting deployable not found, unable to record events to it. ", hosting)
 		} else {
 			dplkey := types.NamespacedName{Name: existingdeployable.GetName(), Namespace: existingdeployable.GetNamespace()}
 			eventObj := ""
@@ -145,7 +145,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 	}
 
 	// remove it from to be deleted map
-	klog.V(10).Info("Removing ", truekey, " from ", familymap)
+	klog.V(5).Info("Removing ", truekey, " from ", familymap)
 	delete(familymap, truekey)
 
 	return r.createManagedDependencies(cluster, instance, familymap)
@@ -205,11 +205,17 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 
 	localLabels[appv1alpha1.PropertyHostingDeployableName] = realhosting.Name
 
-	//propagate subscription.pause label
+	// propagate subscription-pause label
 	if utils.GetPauseLabel(instance) {
 		localLabels[appv1alpha1.LabelSubscriptionPause] = "true"
 	} else {
 		localLabels[appv1alpha1.LabelSubscriptionPause] = "false"
+	}
+
+	// propagate subscription-pause label to new local deployable subscription template
+	err := utils.SetPauseLabelDplSubTpl(instance, localdeployable)
+	if err != nil {
+		klog.Info("Failed to propagate pause label to new local deployable subscription template. err:", err)
 	}
 
 	localdeployable.SetLabels(localLabels)
@@ -236,7 +242,7 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 		}
 	}
 
-	klog.V(10).Info("Local deployable:", localdeployable)
+	klog.V(5).Info("Local deployable:", localdeployable)
 
 	return localdeployable
 }

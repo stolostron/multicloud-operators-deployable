@@ -19,7 +19,7 @@ import (
 	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"k8s.io/klog"
 
-	placementruleapis "github.com/IBM/multicloud-operators-placementrule/pkg/apis"
+	placementruleapis "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis"
 )
 
 // AddToSchemes may be used to add all resources defined in the project to a Scheme

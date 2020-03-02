@@ -1,0 +1,24 @@
+apiVersion:  multicloud-apps.io/v1alpha1
+kind: Deployable
+metadata:
+  annotations:
+    multicloud-apps.io/is-local-deployable: "false"
+  name: sub-orig-target-deployable
+  namespace: default
+spec:
+  template:
+    apiVersion: multicloud-apps.io/v1alpha1
+    kind: Subscription
+    metadata:
+      labels:
+        app: app222
+      name: sub-orig
+      namespace: default
+    spec:
+      channel: dev1/dev1
+      packageFilter:
+        version: =1.2.4
+      placement:
+        local: true
+    status:
+      lastUpdateTime: null

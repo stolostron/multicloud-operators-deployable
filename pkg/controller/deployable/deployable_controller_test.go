@@ -35,9 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
-	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
-	placementrulev1alpha1 "github.com/IBM/multicloud-operators-placementrule/pkg/apis/app/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
+	placementrulev1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1alpha1"
 )
 
 var c client.Client
@@ -303,7 +303,7 @@ func TestOverride(t *testing.T) {
 
 	dplobj := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "app.ibm.com/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1alpha1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -463,7 +463,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	configData1["purpose"] = "rolling update"
 
 	anno1 := make(map[string]string)
-	anno1["app.ibm.com/is-local-deployable"] = "false"
+	anno1["multicloud-apps.io/is-local-deployable"] = "false"
 
 	versionConfigMapTpl := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -479,7 +479,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 
 	rollingVersionConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "app.ibm.com/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1alpha1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -502,7 +502,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	configData2["purpose"] = "test"
 
 	anno2 := make(map[string]string)
-	anno2["app.ibm.com/is-local-deployable"] = "false"
+	anno2["multicloud-apps.io/is-local-deployable"] = "false"
 
 	configMapTpl := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -518,7 +518,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 
 	rollingConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "app.ibm.com/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1alpha1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -597,7 +597,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 	}
 
 	//annotate rolling update target to the root deployable and trigger reconcile
-	rootDpl.Annotations["app.ibm.com/rollingupdate-target"] = "postrollingupdate-version-configmap"
+	rootDpl.Annotations["multicloud-apps.io/rollingupdate-target"] = "postrollingupdate-version-configmap"
 	err = c.Update(context.TODO(), rootDpl)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
@@ -650,7 +650,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 	configData1["purpose"] = "rolling update"
 
 	anno1 := make(map[string]string)
-	anno1["app.ibm.com/is-local-deployable"] = "false"
+	anno1["multicloud-apps.io/is-local-deployable"] = "false"
 
 	versionConfigMapTpl := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -666,7 +666,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 
 	rollingVersionConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "app.ibm.com/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1alpha1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -686,7 +686,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 	configData2["purpose"] = "test"
 
 	anno2 := make(map[string]string)
-	anno2["app.ibm.com/is-local-deployable"] = "false"
+	anno2["multicloud-apps.io/is-local-deployable"] = "false"
 
 	configMapTpl := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -702,7 +702,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 
 	rollingConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "app.ibm.com/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1alpha1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -892,7 +892,7 @@ func annotateRollingUpdate(t *testing.T, rootDpl, rollingConfigmapDpl *appv1alph
 	var err error
 
 	//annotate rolling update target to the root deployable and trigger reconcile, 3 deployables are expected to rolling update.
-	rootDpl.Annotations["app.ibm.com/rollingupdate-target"] = "version-configmap"
+	rootDpl.Annotations["multicloud-apps.io/rollingupdate-target"] = "version-configmap"
 	err = c.Update(context.TODO(), rootDpl)
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))

@@ -26,8 +26,8 @@ import (
 
 	"github.com/prometheus/common/log"
 
-	"github.com/IBM/multicloud-operators-deployable/pkg/apis"
-	"github.com/IBM/multicloud-operators-deployable/pkg/controller"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/controller"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"

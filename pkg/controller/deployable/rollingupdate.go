@@ -19,8 +19,8 @@ import (
 	"reflect"
 	"strconv"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
-	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
@@ -34,17 +34,17 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
-	klog.V(5).Info("Rolling Updating ", instance)
+	klog.V(1).Info("Rolling Updating ", instance.GetName())
 
 	annotations := instance.GetAnnotations()
 
 	if annotations == nil || annotations[appv1alpha1.AnnotationRollingUpdateTarget] == "" {
-		klog.V(5).Info("Empty annotation or No rolling update target in annotations", annotations)
+		klog.V(1).Info("Empty annotation or No rolling update target in annotations", annotations)
 		return nil
 	}
 
 	if len(instance.Status.PropagatedStatus) == 0 {
-		klog.V(5).Info(" No propagated clusters for rolling update", annotations)
+		klog.V(1).Info(" No propagated clusters for rolling update", annotations)
 		return nil
 	}
 
@@ -55,7 +55,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 	}
 
 	maxunav = (len(instance.Status.PropagatedStatus)*maxunav + 99) / 100
-	klog.V(5).Info("ongoing rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget], " with max ", maxunav, " unavaialble clusters")
+	klog.V(1).Info("ongoing rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget], " with max ", maxunav, " unavaialble clusters")
 
 	targetdpl := &appv1alpha1.Deployable{}
 	err = r.Get(context.TODO(),
@@ -67,10 +67,10 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 	if err != nil {
 		klog.Info("Failed to find rolling update target", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
 
-		return nil
+		return err
 	}
 
-	//propagate subscription.pause label to rolling update target deployable subscription template
+	// propagate subscription-pause label to rolling update target deployable subscription template
 	err = utils.SetPauseLabelDplSubTpl(instance, targetdpl)
 	if err != nil {
 		klog.Info("Failed to propagate pause label to target deployable subscription template. err:", err)
@@ -79,7 +79,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 
 	//it is only triggered in the initial rolling update.
 	if !reflect.DeepEqual(instance.Spec.Template, targetdpl.Spec.Template) {
-		klog.V(5).Info("Initialize rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
+		klog.V(1).Info("Initialize rolling update to ", annotations[appv1alpha1.AnnotationRollingUpdateTarget])
 
 		ov := appv1alpha1.Overrides{}
 
@@ -147,7 +147,7 @@ func (r *ReconcileDeployable) rollingUpdate(instance *appv1alpha1.Deployable) er
 		instance.Spec.Overrides = append(instance.Spec.Overrides, *(cov.DeepCopy()))
 	}
 
-	klog.V(5).Info("Rolling update exit with overrides: ", instance.Spec.Overrides)
+	klog.V(1).Info("Rolling update exit with overrides: ", instance.Spec.Overrides)
 
 	return nil
 }
@@ -160,7 +160,7 @@ func (r *ReconcileDeployable) validateOverridesForRollingUpdate(instance *appv1a
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
-	klog.V(5).Info("Rolling update validation started with overrides: ", instance.Spec.Overrides, "and status ", instance.Status.PropagatedStatus)
+	klog.V(1).Info("Rolling update validation started with overrides: ", instance.Spec.Overrides, "and status ", instance.Status.PropagatedStatus)
 
 	var allov []appv1alpha1.Overrides
 

@@ -34,10 +34,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	appv1alpha1 "github.com/IBM/multicloud-operators-deployable/pkg/apis/app/v1alpha1"
-	"github.com/IBM/multicloud-operators-deployable/pkg/utils"
-	placementv1alpha1 "github.com/IBM/multicloud-operators-placementrule/pkg/apis/app/v1alpha1"
-	placementutils "github.com/IBM/multicloud-operators-placementrule/pkg/utils"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
+	placementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1alpha1"
+	placementutils "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/utils"
 )
 
 /**
@@ -77,7 +77,7 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 	}
 
 	cname := obj.Meta.GetName()
-	klog.V(10).Info("In placement Mapper:", cname)
+	klog.V(5).Info("In placement Mapper:", cname)
 
 	var requests []reconcile.Request
 
@@ -92,15 +92,6 @@ func (mapper *placementruleMapper) Map(obj handler.MapObject) []reconcile.Reques
 
 	for _, dpl := range dplList.Items {
 		if dpl.Spec.Placement == nil || dpl.Spec.Placement.PlacementRef == nil || dpl.Spec.Placement.PlacementRef.Name != obj.Meta.GetName() {
-			continue
-		}
-
-		annotations := dpl.GetAnnotations()
-		if annotations == nil || annotations[appv1alpha1.AnnotationManagedCluster] == "" {
-			continue
-		}
-
-		if annotations[appv1alpha1.AnnotationManagedCluster] != (types.NamespacedName{}).String() {
 			continue
 		}
 
@@ -129,7 +120,7 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 	}
 
 	cname := obj.Meta.GetName()
-	klog.V(10).Info("In cluster Mapper for ", cname)
+	klog.V(5).Info("In cluster Mapper for ", cname)
 
 	var requests []reconcile.Request
 
@@ -161,15 +152,6 @@ func (mapper *clusterMapper) Map(obj handler.MapObject) []reconcile.Request {
 			if !matched {
 				continue
 			}
-		}
-		// only reconcile it's own object
-		annotations := dpl.GetAnnotations()
-		if annotations == nil || annotations[appv1alpha1.AnnotationManagedCluster] == "" {
-			continue
-		}
-
-		if annotations[appv1alpha1.AnnotationManagedCluster] != (types.NamespacedName{}).String() {
-			continue
 		}
 
 		objkey := types.NamespacedName{
@@ -288,7 +270,7 @@ func (mapper *deployableMapper) Map(obj handler.MapObject) []reconcile.Request {
 		requests = append(requests, reconcile.Request{NamespacedName: *hdplkey})
 	}
 
-	klog.V(10).Info("Out deployable mapper with requests:", requests)
+	klog.V(5).Info("Out deployable mapper with requests:", requests)
 
 	return requests
 }
@@ -321,12 +303,12 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 			// validate all deployables, remove the deployables whose hosting deployables are gone
 			err = r.validateDeployables()
 
-			klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
+			klog.Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
 
 			return reconcile.Result{}, err
 		}
 		// Error reading the object - requeue the request.
-		klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
+		klog.Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
 
 		return reconcile.Result{}, err
 	}
@@ -334,38 +316,59 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 	savedStatus := instance.Status.DeepCopy()
 
 	// try if it is a hub deployable
-	err = r.handleDeployable(instance)
-	if err != nil {
-		instance.Status.Phase = appv1alpha1.DeployableFailed
-		instance.Status.PropagatedStatus = nil
-		instance.Status.Reason = err.Error()
-	} else {
-		instance.Status.Reason = ""
-		instance.Status.Message = ""
+	huberr := r.handleDeployable(instance)
+
+	newPropagatedStatus := make(map[string]*appv1alpha1.ResourceUnitStatus)
+
+	for k, v := range instance.Status.PropagatedStatus {
+		newPropagatedStatus[k] = v
 	}
 
-	err = r.Update(context.TODO(), instance)
-	if err != nil {
-		klog.Error("Error returned when updating instance:", err, "instance:", instance)
-		return reconcile.Result{}, err
-	}
+	// only update hub deployable. no need to update propagated deployable.
+	if instance.Spec.Placement != nil {
+		err = r.Update(context.TODO(), instance)
 
-	// reconcile finished check if need to upadte the resource
-	if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
-		if !reflect.DeepEqual(savedStatus, &(instance.Status)) {
-			now := metav1.Now()
-			instance.Status.LastUpdateTime = &now
-			klog.V(10).Info("Update status", instance.Status)
-			err = r.Status().Update(context.TODO(), instance)
+		if err != nil {
+			klog.Error("Error returned when updating instance:", err, "instance:", instance)
+			return reconcile.Result{}, err
+		}
 
-			if err != nil {
-				klog.Error("Error returned when updating status:", err, "instance:", instance)
-				return reconcile.Result{}, err
+		// reconcile finished check if need to upadte the resource
+		if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
+			if !reflect.DeepEqual(savedStatus, &(instance.Status)) ||
+				!reflect.DeepEqual(savedStatus.PropagatedStatus, newPropagatedStatus) {
+				now := metav1.Now()
+				instance.Status.LastUpdateTime = &now
+
+				instance.Status.PropagatedStatus = newPropagatedStatus
+
+				if huberr != nil {
+					instance.Status.Phase = appv1alpha1.DeployableFailed
+					instance.Status.PropagatedStatus = nil
+					instance.Status.Reason = huberr.Error()
+				} else {
+					instance.Status.Phase = appv1alpha1.DeployablePropagated
+					instance.Status.Reason = ""
+					instance.Status.Message = ""
+				}
+
+				klog.V(5).Infof("instance: %v/%v, Update status: %#v",
+					instance.GetNamespace(), instance.GetName(),
+					instance.Status)
+
+				utils.PrintPropagatedStatus(instance.Status.PropagatedStatus, "New Propagated Status: ")
+
+				err = r.Status().Update(context.TODO(), instance)
+
+				if err != nil {
+					klog.Error("Error returned when updating status:", err, "instance:", instance)
+					return reconcile.Result{}, err
+				}
 			}
 		}
 	}
 
-	klog.V(10).Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
+	klog.Info("Reconciling - finished.", request.NamespacedName, " with Get err:", err)
 
 	return reconcile.Result{}, nil
 }

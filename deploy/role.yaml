@@ -5,30 +5,36 @@ metadata:
   name: multicloud-operators
 rules:
 - apiGroups:
-  - 'app.ibm.com'
+  - app.ibm.com
   resources:
-  - 'placementrules'
+  - placementrules
   verbs:
   - get
   - list
 - apiGroups:
-  - 'app.ibm.com'
+  - app.ibm.com
   resources:
-  - 'deployables'
+  - deployables
   verbs:
   - '*'
 - apiGroups:
-  - 'clusterregistry.k8s.io'
+  - clusterregistry.k8s.io
   resources:
-  - 'clusters'
+  - clusters
   verbs:
   - get
   - list
 - apiGroups:
-  - ''
+  - ""
   resources:
-  - 'pods'
-  - 'configmaps'
+  - pods
+  - configmaps
   verbs:
   - get
   - create
+- apiGroups:
+  - multicloud-apps.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
