@@ -92,6 +92,9 @@ var (
 
 var (
 	payload = &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ConfigMap",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "payload",
 		},
