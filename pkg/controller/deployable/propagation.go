@@ -35,6 +35,13 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 		defer klog.Infof("Exiting: %v()", fnName)
 	}
 
+	// propagate subscription-pause label to its subscription template
+	err := utils.SetPauseLabelDplSubTpl(instance, instance)
+	if err != nil {
+		klog.Info("Failed to propagate pause label to new local deployable subscription template. err:", err)
+		return err
+	}
+
 	// try to find children
 	children, err := r.getDeployableFamily(instance)
 
@@ -80,7 +87,7 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	}
 	// instance itself does not expire anyway
 	delete(expireddeployablemap, getDeployableTrueKey(instance))
-	klog.V(5).Info("Existing deployables to check expiration:", expireddeployablemap)
+	klog.V(1).Info("Existing deployables to check expiration:", expireddeployablemap)
 
 	err = r.rollingUpdate(instance)
 

@@ -1,0 +1,28 @@
+apiVersion: multicloud-apps.io/v1alpha1
+kind: Deployable
+metadata:
+  annotations:
+    multicloud-apps.io/is-local-deployable: "false"
+    multicloud-apps.io/rollingupdate-maxunavaialble: "50"
+    multicloud-apps.io/rollingupdate-target: "sub-orig-target-deployable"
+  name: sub-orig-deployable
+  namespace: default
+spec:
+  placement:
+      clusterSelector: {}
+  template:
+    apiVersion: multicloud-apps.io/v1alpha1
+    kind: Subscription
+    metadata:
+      labels:
+        app: app111
+      name: sub-orig
+      namespace: default
+    spec:
+      channel: dev1/dev1
+      packageFilter:
+        version: =1.2.3
+      placement:
+        local: true
+    status:
+      lastUpdateTime: null

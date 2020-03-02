@@ -410,3 +410,53 @@ func InstanceDeepCopy(a, b interface{}) error {
 
 	return err
 }
+
+// GetPauseLabel check if the subscription-pause label exists
+func GetPauseLabel(instance *appv1alpha1.Deployable) bool {
+	labels := instance.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	if labels[appv1alpha1.LabelSubscriptionPause] != "" && strings.EqualFold(labels[appv1alpha1.LabelSubscriptionPause], "true") {
+		return true
+	}
+
+	return false
+}
+
+// SetPauseLabelDplSubTpl set the subscription-pause label to a deployable containing a subscription template
+func SetPauseLabelDplSubTpl(instance, targetdpl *appv1alpha1.Deployable) error {
+	targetTpl := &unstructured.Unstructured{}
+
+	err := json.Unmarshal(targetdpl.Spec.Template.Raw, targetTpl)
+	if err != nil {
+		klog.Error("Failed to unmashal target deployable subscription template with error: ", err)
+		return err
+	}
+
+	if targetTpl.GetKind() != "Subscription" {
+		return nil
+	}
+
+	targetTplLabels := targetTpl.GetLabels()
+	if targetTplLabels == nil {
+		targetTplLabels = make(map[string]string)
+	}
+
+	if GetPauseLabel(instance) {
+		targetTplLabels[appv1alpha1.LabelSubscriptionPause] = "true"
+	} else {
+		targetTplLabels[appv1alpha1.LabelSubscriptionPause] = "false"
+	}
+
+	targetTpl.SetLabels(targetTplLabels)
+
+	targetdpl.Spec.Template.Raw, err = json.Marshal(targetTpl)
+	if err != nil {
+		klog.Error("Error in mashalling targetTpl obj")
+		return err
+	}
+
+	return nil
+}

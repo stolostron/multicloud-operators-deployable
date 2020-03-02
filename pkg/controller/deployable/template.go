@@ -93,7 +93,7 @@ func (r *ReconcileDeployable) createManagedDeployable(cluster types.NamespacedNa
 		ifRecordEvent = true
 	} else {
 		if !utils.CompareDeployable(original, existingdeployable) {
-			klog.Info("Updating existing local deployable: ", existingdeployable)
+			klog.Info("Updating existing local deployable: ", existingdeployable.GetName())
 			err = r.Update(context.TODO(), existingdeployable)
 			if err == nil {
 				newDpl := existingdeployable.DeepCopy()
@@ -204,6 +204,20 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	}
 
 	localLabels[appv1alpha1.PropertyHostingDeployableName] = realhosting.Name
+
+	// propagate subscription-pause label
+	if utils.GetPauseLabel(instance) {
+		localLabels[appv1alpha1.LabelSubscriptionPause] = "true"
+	} else {
+		localLabels[appv1alpha1.LabelSubscriptionPause] = "false"
+	}
+
+	// propagate subscription-pause label to new local deployable subscription template
+	err := utils.SetPauseLabelDplSubTpl(instance, localdeployable)
+	if err != nil {
+		klog.Info("Failed to propagate pause label to new local deployable subscription template. err:", err)
+	}
+
 	localdeployable.SetLabels(localLabels)
 
 	covs, _ := utils.PrepareOverrides(*cluster, instance)
