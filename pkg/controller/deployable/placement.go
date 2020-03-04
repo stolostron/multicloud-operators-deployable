@@ -22,10 +22,9 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1"
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
-	appPlacementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/app/v1alpha1"
-	placementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1alpha1"
+	placementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1"
 	placementutils "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/utils"
 )
 
@@ -50,16 +49,12 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 	if instance.Spec.Placement.PlacementRef != nil {
 		clusters, err = r.getClustersFromPlacementRef(instance)
 	} else {
-		appPlacementInstance := &appPlacementv1alpha1.PlacementRule{}
-		err := utils.InstanceDeepCopy(instance.Spec.Placement.GenericPlacementFields, &appPlacementInstance.Spec.GenericPlacementFields)
-		if err == nil {
-			clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, appPlacementInstance.Spec.GenericPlacementFields, r.authClient, instance)
-			if err != nil {
-				klog.Error("Failed to get clusters from generic fields with error: ", err)
-			}
-			for _, cl := range clustermap {
-				clusters = append(clusters, types.NamespacedName{Name: cl.Name, Namespace: cl.Namespace})
-			}
+		clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, instance.Spec.Placement.GenericPlacementFields, r.authClient, instance)
+		if err != nil {
+			klog.Error("Failed to get clusters from generic fields with error: ", err)
+		}
+		for _, cl := range clustermap {
+			clusters = append(clusters, types.NamespacedName{Name: cl.Name, Namespace: cl.Namespace})
 		}
 	}
 
@@ -86,7 +81,7 @@ func (r *ReconcileDeployable) getClustersFromPlacementRef(instance *appv1alpha1.
 	pp := &placementv1alpha1.PlacementRule{}
 	pref := instance.Spec.Placement.PlacementRef
 
-	if len(pref.Kind) > 0 && pref.Kind != "PlacementRule" || len(pref.APIVersion) > 0 && pref.APIVersion != "multicloud-apps.io/v1alpha1" {
+	if len(pref.Kind) > 0 && pref.Kind != "PlacementRule" || len(pref.APIVersion) > 0 && pref.APIVersion != "multicloud-apps.io/v1" {
 		klog.Warning("Unsupported placement reference:", instance.Spec.Placement.PlacementRef)
 
 		return nil, nil

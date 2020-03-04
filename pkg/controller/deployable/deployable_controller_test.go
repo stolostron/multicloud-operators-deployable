@@ -35,9 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1"
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
-	placementrulev1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1alpha1"
+	placementrulev1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1"
 )
 
 var c client.Client
@@ -306,7 +306,7 @@ func TestOverride(t *testing.T) {
 
 	dplobj := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "multicloud-apps.io/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -482,7 +482,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 
 	rollingVersionConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "multicloud-apps.io/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -521,7 +521,7 @@ func TestRollingUpdateStatus(t *testing.T) {
 
 	rollingConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "multicloud-apps.io/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -669,7 +669,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 
 	rollingVersionConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "multicloud-apps.io/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -705,7 +705,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 
 	rollingConfigmapDpl := &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "multicloud-apps.io/v1alpha1",
+			APIVersion: "multicloud-apps.io/v1",
 			Kind:       "Deployable",
 		},
 		ObjectMeta: metav1.ObjectMeta{
