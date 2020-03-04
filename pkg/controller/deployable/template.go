@@ -24,7 +24,7 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1alpha1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1"
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
 )
 

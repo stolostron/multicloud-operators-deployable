@@ -1,4 +1,4 @@
-apiVersion: multicloud-apps.io/v1alpha1
+apiVersion: multicloud-apps.io/v1
 kind: Deployable
 metadata:
   annotations:
@@ -7,7 +7,7 @@ metadata:
   namespace: default
 spec:
   template:
-    apiVersion: multicloud-apps.io/v1alpha1
+    apiVersion: multicloud-apps.io/v1
     kind: Subscription
     metadata:
       labels:

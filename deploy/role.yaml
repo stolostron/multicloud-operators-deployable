@@ -36,5 +36,6 @@ rules:
   - multicloud-apps.io
   resources:
   - '*'
+  - deployables
   verbs:
   - '*'
