@@ -22,9 +22,9 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/multicloudapps/v1"
+	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
-	placementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1"
+	placementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/apps/v1"
 	placementutils "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/utils"
 )
 
@@ -81,7 +81,7 @@ func (r *ReconcileDeployable) getClustersFromPlacementRef(instance *appv1alpha1.
 	pp := &placementv1alpha1.PlacementRule{}
 	pref := instance.Spec.Placement.PlacementRef
 
-	if len(pref.Kind) > 0 && pref.Kind != "PlacementRule" || len(pref.APIVersion) > 0 && pref.APIVersion != "multicloud-apps.io/v1" {
+	if len(pref.Kind) > 0 && pref.Kind != "PlacementRule" || len(pref.APIVersion) > 0 && pref.APIVersion != "apps.open-cluster-management.io/v1" {
 		klog.Warning("Unsupported placement reference:", instance.Spec.Placement.PlacementRef)
 
 		return nil, nil

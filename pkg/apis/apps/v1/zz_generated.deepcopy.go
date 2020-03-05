@@ -19,7 +19,7 @@
 package v1
 
 import (
-	multicloudappsv1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/multicloudapps/v1"
+	appsv1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/apps/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -165,7 +165,7 @@ func (in *DeployableSpec) DeepCopyInto(out *DeployableSpec) {
 	}
 	if in.Placement != nil {
 		in, out := &in.Placement, &out.Placement
-		*out = new(multicloudappsv1.Placement)
+		*out = new(appsv1.Placement)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Overrides != nil {
