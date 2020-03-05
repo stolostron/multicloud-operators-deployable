@@ -39,3 +39,9 @@ rules:
   - deployables
   verbs:
   - '*'
+- apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - '*'
+  verbs:
+  - '*'

@@ -1,8 +1,8 @@
-apiVersion: multicloud-apps.io/v1
+apiVersion: apps.open-cluster-management.io/v1
 kind: Deployable
 metadata:
   annotations:
-    multicloud-apps.io/is-local-deployable: "false"
+    apps.open-cluster-management.io/is-local-deployable: "false"
   labels:
     deployable-label: "passed-in"
   name: example-configmap

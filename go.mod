@@ -5,7 +5,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20180820084758-c7ce16629ff4
 	github.com/go-openapi/spec v0.19.0
 	github.com/onsi/gomega v1.5.0
-	github.com/open-cluster-management/multicloud-operators-placementrule v0.0.0-20200304045849-06140380762f
+	github.com/open-cluster-management/multicloud-operators-placementrule v0.0.0-20200304214605-e52bfdcb25bb
 	github.com/operator-framework/operator-sdk v0.12.0
 	github.com/prometheus/common v0.4.1
 	github.com/spf13/pflag v1.0.3

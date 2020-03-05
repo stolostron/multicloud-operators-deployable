@@ -1,17 +1,17 @@
-apiVersion: multicloud-apps.io/v1
+apiVersion: apps.open-cluster-management.io/v1
 kind: Deployable
 metadata:
   annotations:
-    multicloud-apps.io/is-local-deployable: "false"
-    multicloud-apps.io/rollingupdate-maxunavaialble: "50"
-    multicloud-apps.io/rollingupdate-target: "sub-orig-target-deployable"
+    apps.open-cluster-management.io/is-local-deployable: "false"
+    apps.open-cluster-management.io/rollingupdate-maxunavaialble: "50"
+    apps.open-cluster-management.io/rollingupdate-target: "sub-orig-target-deployable"
   name: sub-orig-deployable
   namespace: default
 spec:
   placement:
       clusterSelector: {}
   template:
-    apiVersion: multicloud-apps.io/v1
+    apiVersion: apps.open-cluster-management.io/v1
     kind: Subscription
     metadata:
       labels:
