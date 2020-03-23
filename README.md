@@ -3,7 +3,7 @@
 [![Build](http://35.227.205.240/badge.svg?jobs=build_multicloud-operators-deployable)](http://35.227.205.240/badge.svg?jobs=build_multicloud-operators-deployable)
 [![GoDoc](https://godoc.org/github.com/open-cluster-management/multicloud-operators-deployable?status.svg)](https://godoc.org/github.com/open-cluster-management/multicloud-operators-deployable)
 [![Go Report Card](https://goreportcard.com/badge/github.com/open-cluster-management/multicloud-operators-deployable)](https://goreportcard.com/report/github.com/open-cluster-management/multicloud-operators-deployable)
-[![Code Coverage](https://codecov.io/gh/open-cluster-management/multicloud-operators-deployable/branch/master/graphs/badge.svg?branch=master)](https://codecov.io/gh/open-cluster-management/multicloud-operators-deployable?branch=master)
+[![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_multicloud-operators-deployable&metric=coverage)](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_multicloud-operators-deployable&metric=coverage)
 [![License](https://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
