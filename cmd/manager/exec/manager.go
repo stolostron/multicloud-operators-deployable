@@ -29,6 +29,7 @@ import (
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis"
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/controller"
 
+	placementutils "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/utils"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -136,6 +137,9 @@ func RunManager(sig <-chan struct{}) {
 			klog.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
 		}
 	}
+
+	klog.Info("Detecting ACM cluster API service...")
+	placementutils.DetectClusterRegistry(mgr.GetAPIReader(), sig)
 
 	klog.Info("Starting the Cmd.")
 

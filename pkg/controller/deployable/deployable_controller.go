@@ -196,13 +196,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// watch for cluster change excluding heartbeat
-	err = c.Watch(
-		&source.Kind{Type: &clusterv1alpha1.Cluster{}},
-		&handler.EnqueueRequestsFromMapFunc{ToRequests: &clusterMapper{mgr.GetClient()}},
-		placementutils.ClusterPredicateFunc,
-	)
-	if err != nil {
-		return err
+	if placementutils.IsReadyACMClusterRegistry(mgr.GetAPIReader()) {
+		err = c.Watch(
+			&source.Kind{Type: &clusterv1alpha1.Cluster{}},
+			&handler.EnqueueRequestsFromMapFunc{ToRequests: &clusterMapper{mgr.GetClient()}},
+			placementutils.ClusterPredicateFunc,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
