@@ -1,6 +1,15 @@
 # Temporary Build Files
 build/_output
 build/_test
+
+OPENSOURCE.check
+.build-harness
+.build-harness-bootstrap
+
+# override build harness vendoring
+!vbh/.build-harness-vendorized
+!vbh/build-harness
+!vbh/build-harness-extensions
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
 # -*- mode: gitignore; -*-
