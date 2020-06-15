@@ -154,7 +154,8 @@ func OverrideTemplate(template *unstructured.Unstructured, overrides []appv1alph
 	}
 
 	for _, override := range overrides {
-		ovuobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&override)
+		tmpOverride := override
+		ovuobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tmpOverride)
 		klog.V(10).Info("From Instance Converter", ovuobj, "with err:", err, " path: ", ovuobj["path"], " value:", ovuobj["value"])
 
 		if err != nil {
