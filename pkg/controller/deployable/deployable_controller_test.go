@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/onsi/gomega"
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -54,13 +54,12 @@ var (
 )
 
 var (
-	endpoint1 = clusterv1alpha1.Cluster{
+	endpoint1 = spokeClusterV1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"name": "endpoint1-ns",
 			},
-			Name:      "endpoint1-ns",
-			Namespace: "endpoint1-ns",
+			Name: "endpoint1-ns",
 		},
 	}
 	endpoint1ns = corev1.Namespace{
@@ -70,13 +69,12 @@ var (
 		},
 	}
 
-	endpoint2 = clusterv1alpha1.Cluster{
+	endpoint2 = spokeClusterV1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"name": "endpoint2-ns",
 			},
-			Name:      "endpoint2-ns",
-			Namespace: "endpoint2-ns",
+			Name: "endpoint2-ns",
 		},
 	}
 	endpoint2ns = corev1.Namespace{
@@ -87,7 +85,7 @@ var (
 	}
 
 	endpointnss = []corev1.Namespace{endpoint1ns, endpoint2ns}
-	endpoints   = []clusterv1alpha1.Cluster{endpoint1, endpoint2}
+	endpoints   = []spokeClusterV1.ManagedCluster{endpoint1, endpoint2}
 )
 
 var (
@@ -218,7 +216,7 @@ func TestPropagate(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	dpllist := &appv1alpha1.DeployableList{}
-	err = c.List(context.TODO(), dpllist, &client.ListOptions{Namespace: endpoint1.GetNamespace()})
+	err = c.List(context.TODO(), dpllist, &client.ListOptions{Namespace: endpoint1.GetName()})
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(dpllist.Items) != 1 {
@@ -248,7 +246,7 @@ func TestPropagate(t *testing.T) {
 		time.Sleep(2 * time.Second)
 
 		dpllist = &appv1alpha1.DeployableList{}
-		err = c.List(context.TODO(), dpllist, &client.ListOptions{Namespace: endpoint1.GetNamespace()})
+		err = c.List(context.TODO(), dpllist, &client.ListOptions{Namespace: endpoint1.GetName()})
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 
 		if len(dpllist.Items) != 0 {
@@ -404,13 +402,12 @@ func TestRollingUpdateStatus(t *testing.T) {
 			},
 		},
 	}
-	endpoint := clusterv1alpha1.Cluster{
+	endpoint := spokeClusterV1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				"name": "postrollingendpoint",
 			},
-			Name:      "postrollingendpoint-ns",
-			Namespace: "postrollingendpoint-ns",
+			Name: "postrollingendpoint-ns",
 		},
 	}
 
@@ -733,7 +730,7 @@ func prepareRollingUpdateDployables(labelSelector *metav1.LabelSelector) (*appv1
 
 var rollingEndpointnss = []corev1.Namespace{}
 
-var rollingEndpoints = []clusterv1alpha1.Cluster{}
+var rollingEndpoints = []spokeClusterV1.ManagedCluster{}
 
 var g *gomega.GomegaWithT
 var requests chan reconcile.Request
@@ -755,13 +752,12 @@ func TestRollingUpdate(t *testing.T) {
 				},
 			},
 		}
-		endpoint := clusterv1alpha1.Cluster{
+		endpoint := spokeClusterV1.ManagedCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{
 					"name": "rollingendpoint",
 				},
-				Name:      "rollingendpoint" + strconv.Itoa(i) + "-ns",
-				Namespace: "rollingendpoint" + strconv.Itoa(i) + "-ns",
+				Name: "rollingendpoint" + strconv.Itoa(i) + "-ns",
 			},
 		}
 

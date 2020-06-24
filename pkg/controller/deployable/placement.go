@@ -54,7 +54,7 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 			klog.Error("Failed to get clusters from generic fields with error: ", err)
 		}
 		for _, cl := range clustermap {
-			clusters = append(clusters, types.NamespacedName{Name: cl.Name, Namespace: cl.Namespace})
+			clusters = append(clusters, types.NamespacedName{Name: cl.Name, Namespace: cl.Name})
 		}
 	}
 

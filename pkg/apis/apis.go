@@ -15,8 +15,8 @@
 package apis
 
 import (
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"k8s.io/klog"
 
 	placementruleapis "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis"
@@ -28,7 +28,7 @@ var AddToSchemes runtime.SchemeBuilder
 // AddToScheme adds all Resources to the Scheme
 func AddToScheme(s *runtime.Scheme) error {
 	// add cluster scheme
-	if err := clusterv1alpha1.AddToScheme(s); err != nil {
+	if err := spokeClusterV1.AddToScheme(s); err != nil {
 		klog.Error("unable add cluster to scheme", err)
 		return err
 	}
