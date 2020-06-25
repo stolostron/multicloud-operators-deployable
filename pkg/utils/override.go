@@ -43,6 +43,7 @@ func GenerateOverrides(src, dst *appv1alpha1.Deployable) (covs []appv1alpha1.Clu
 
 			if err != nil {
 				klog.Info("Error in marshal target target subscription template spec.packageOverride ", ovmap, " with error:", err)
+
 				covs = append(covs, appv1alpha1.ClusterOverride{})
 			} else {
 				clusterOverride := appv1alpha1.ClusterOverride{

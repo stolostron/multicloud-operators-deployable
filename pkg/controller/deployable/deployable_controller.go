@@ -18,12 +18,12 @@ import (
 	"context"
 	"reflect"
 
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	clusterv1alpha1 "k8s.io/cluster-registry/pkg/apis/clusterregistry/v1alpha1"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -198,7 +198,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// watch for cluster change excluding heartbeat
 	if placementutils.IsReadyACMClusterRegistry(mgr.GetAPIReader()) {
 		err = c.Watch(
-			&source.Kind{Type: &clusterv1alpha1.Cluster{}},
+			&source.Kind{Type: &spokeClusterV1.ManagedCluster{}},
 			&handler.EnqueueRequestsFromMapFunc{ToRequests: &clusterMapper{mgr.GetClient()}},
 			placementutils.ClusterPredicateFunc,
 		)
