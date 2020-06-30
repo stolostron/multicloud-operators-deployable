@@ -52,6 +52,7 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 		clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, instance.Spec.Placement.GenericPlacementFields, r.authClient, instance)
 		if err != nil {
 			klog.Error("Failed to get clusters from generic fields with error: ", err)
+			return nil, err
 		}
 		for _, cl := range clustermap {
 			clusters = append(clusters, types.NamespacedName{Name: cl.Name, Namespace: cl.Name})
@@ -95,7 +96,7 @@ func (r *ReconcileDeployable) getClustersFromPlacementRef(instance *appv1alpha1.
 		if errors.IsNotFound(err) {
 			klog.Warning("Failed to locate placement reference", instance.Spec.Placement.PlacementRef)
 
-			return nil, nil
+			return nil, err
 		}
 
 		return nil, err
