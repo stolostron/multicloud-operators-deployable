@@ -1,8 +1,5 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-RUN microdnf update && \
-    microdnf clean all
-
 ENV OPERATOR=/usr/local/bin/multicluster-operators-deployable \
     USER_UID=1001 \
     USER_NAME=multicluster-operators-deployable

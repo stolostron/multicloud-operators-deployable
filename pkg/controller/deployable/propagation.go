@@ -145,7 +145,6 @@ func (r *ReconcileDeployable) handleDeployable(instance *appv1alpha1.Deployable)
 	r.validateOverridesForRollingUpdate(instance)
 
 	instance.Status.Phase = appv1alpha1.DeployablePropagated
-	instance.Status.Reason = ""
 
 	klog.V(5).Infof("Exit hub func with err: %v, and instance status: %#v", err, instance.Status)
 

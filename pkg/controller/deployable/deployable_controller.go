@@ -320,14 +320,6 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 	// try if it is a hub deployable
 	huberr := r.handleDeployable(instance)
 
-	newStatus := instance.Status.DeepCopy()
-
-	if huberr != nil {
-		newStatus.Phase = appv1alpha1.DeployableFailed
-		newStatus.PropagatedStatus = nil
-		newStatus.Reason = huberr.Error()
-	}
-
 	newPropagatedStatus := make(map[string]*appv1alpha1.ResourceUnitStatus)
 
 	for k, v := range instance.Status.PropagatedStatus {
@@ -345,20 +337,28 @@ func (r *ReconcileDeployable) Reconcile(request reconcile.Request) (reconcile.Re
 
 		// reconcile finished check if need to upadte the resource
 		if len(instance.GetObjectMeta().GetFinalizers()) == 0 {
-			if !reflect.DeepEqual(savedStatus, newStatus) ||
+			if !reflect.DeepEqual(savedStatus, &(instance.Status)) ||
 				!reflect.DeepEqual(savedStatus.PropagatedStatus, newPropagatedStatus) {
 				now := metav1.Now()
-				newStatus.LastUpdateTime = &now
+				instance.Status.LastUpdateTime = &now
 
-				newStatus.PropagatedStatus = newPropagatedStatus
+				instance.Status.PropagatedStatus = newPropagatedStatus
+
+				if huberr != nil {
+					instance.Status.Phase = appv1alpha1.DeployableFailed
+					instance.Status.PropagatedStatus = nil
+					instance.Status.Reason = huberr.Error()
+				} else {
+					instance.Status.Phase = appv1alpha1.DeployablePropagated
+					instance.Status.Reason = ""
+					instance.Status.Message = ""
+				}
 
 				klog.V(5).Infof("instance: %v/%v, Update status: %#v",
 					instance.GetNamespace(), instance.GetName(),
-					newStatus)
+					instance.Status)
 
-				utils.PrintPropagatedStatus(newStatus.PropagatedStatus, "New Propagated Status: ")
-
-				instance.Status = *newStatus
+				utils.PrintPropagatedStatus(instance.Status.PropagatedStatus, "New Propagated Status: ")
 
 				err = r.Status().Update(context.TODO(), instance)
 
