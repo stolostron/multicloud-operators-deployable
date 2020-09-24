@@ -17,6 +17,7 @@ package deployable
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -164,6 +165,27 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	localdeployable.SetNamespace(cluster.Namespace)
 
 	localdeployable.Spec.Template = instance.Spec.Template.DeepCopy()
+
+	if strings.EqualFold(cluster.Name, "local-cluster") {
+		klog.Info("This is local-cluster")
+		klog.Info("Appending -local to the subscription name")
+		// append -local to the local subscription name
+		// This is temporary. We also need to handle a managed hub cluster with a different name
+		sub := &unstructured.Unstructured{}
+		err := json.Unmarshal(localdeployable.Spec.Template.Raw, sub)
+
+		if err != nil {
+			klog.Info("Error in unmarshall, err:", err, " |template: ", string(localdeployable.Spec.Template.Raw))
+		} else {
+			sub.SetName(sub.GetName() + "-local")
+		}
+
+		localdeployable.Spec.Template.Raw, err = json.Marshal(sub)
+		if err != nil {
+			klog.Info("Error in mashalling obj ", sub, err)
+		}
+	}
+
 	localdeployable.Spec.Dependencies = instance.Spec.Dependencies
 	localdeployable.Spec.Overrides = nil
 	localdeployable.Spec.Channels = nil
