@@ -25,6 +25,7 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
 	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
 )
@@ -166,24 +167,35 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 
 	localdeployable.Spec.Template = instance.Spec.Template.DeepCopy()
 
-	if strings.EqualFold(cluster.Name, "local-cluster") {
-		klog.Info("This is local-cluster")
-		klog.Info("Appending -local to the subscription name")
-		// append -local to the local subscription name
-		// This is temporary. We also need to handle a managed hub cluster with a different name
-		sub := &unstructured.Unstructured{}
-		err := json.Unmarshal(localdeployable.Spec.Template.Raw, sub)
+	managedCluster := &spokeClusterV1.ManagedCluster{}
+	managedClusterKey := types.NamespacedName{
+		Name: cluster.Name,
+	}
+	err := r.Get(context.TODO(), managedClusterKey, managedCluster)
 
-		if err != nil {
-			klog.Info("Error in unmarshall, err:", err, " |template: ", string(localdeployable.Spec.Template.Raw))
-		} else {
-			sub.SetName(sub.GetName() + "-local")
-		}
+	if err != nil {
+		klog.Error("Failed to find managed cluster " + cluster.Name)
+	} else {
+		labels := managedCluster.GetLabels()
 
-		localdeployable.Spec.Template.Raw, err = json.Marshal(sub)
+		if strings.EqualFold(labels["local-cluster"], "true") {
+			klog.Info("This is local-cluster")
+			klog.Info("Appending -local to the subscription name")
+			// append -local to the local subscription name to avoid subscription name collision in the same namespace.
+			sub := &unstructured.Unstructured{}
+			err := json.Unmarshal(localdeployable.Spec.Template.Raw, sub)
 
-		if err != nil {
-			klog.Info("Error in mashalling obj ", sub, err)
+			if err != nil {
+				klog.Info("Error in unmarshall, err:", err, " |template: ", string(localdeployable.Spec.Template.Raw))
+			} else {
+				sub.SetName(sub.GetName() + "-local")
+			}
+
+			localdeployable.Spec.Template.Raw, err = json.Marshal(sub)
+
+			if err != nil {
+				klog.Info("Error in mashalling obj ", sub, err)
+			}
 		}
 	}
 
@@ -236,7 +248,7 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 	}
 
 	// propagate subscription-pause label to new local deployable subscription template
-	err := utils.SetPauseLabelDplSubTpl(instance, localdeployable)
+	err = utils.SetPauseLabelDplSubTpl(instance, localdeployable)
 	if err != nil {
 		klog.Info("Failed to propagate pause label to new local deployable subscription template. err:", err)
 	}
