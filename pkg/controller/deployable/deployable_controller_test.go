@@ -57,7 +57,8 @@ var (
 	endpoint1 = spokeClusterV1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
-				"name": "endpoint1-ns",
+				"name":          "endpoint1-ns",
+				"local-cluster": "true",
 			},
 			Name: "endpoint1-ns",
 		},
@@ -189,6 +190,10 @@ func TestPropagate(t *testing.T) {
 		Name: endpoint1.GetName(),
 	}
 
+	placecluster2 := placementrulev1alpha1.GenericClusterReference{
+		Name: endpoint2.GetName(),
+	}
+
 	instance := &appv1alpha1.Deployable{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dplname,
@@ -200,7 +205,7 @@ func TestPropagate(t *testing.T) {
 			},
 			Placement: &placementrulev1alpha1.Placement{
 				GenericPlacementFields: placementrulev1alpha1.GenericPlacementFields{
-					Clusters: []placementrulev1alpha1.GenericClusterReference{placecluster},
+					Clusters: []placementrulev1alpha1.GenericClusterReference{placecluster, placecluster2},
 				},
 			},
 		},
@@ -230,6 +235,36 @@ func TestPropagate(t *testing.T) {
 		if dpl.GetGenerateName() != expgenname {
 			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
 		}
+
+		// If the target cluster has local-cluster:true label, check if the payload name is appended by -local
+		sub := &unstructured.Unstructured{}
+		err = json.Unmarshal(dpllist.Items[0].Spec.Template.Raw, sub)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+		g.Expect(sub.GetName()).To(gomega.Equal("payload-local"))
+
+	}
+
+	dpllist2 := &appv1alpha1.DeployableList{}
+	err = c.List(context.TODO(), dpllist2, &client.ListOptions{Namespace: endpoint2.GetName()})
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	if len(dpllist2.Items) != 1 {
+		t.Errorf("Failed to propagate to cluster endpoint2. items: %v", dpllist)
+	}
+
+	if len(dpllist2.Items) == 1 {
+		dpl := dpllist2.Items[0]
+		expgenname := instance.GetName() + "-"
+
+		if dpl.GetGenerateName() != expgenname {
+			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
+		}
+
+		// If the target cluster does not have local-cluster:true label, check if the payload name is NOT appended by -local
+		sub := &unstructured.Unstructured{}
+		err = json.Unmarshal(dpllist2.Items[0].Spec.Template.Raw, sub)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+		g.Expect(sub.GetName()).To(gomega.Equal("payload"))
 	}
 
 	//delete the instance, verify the propagated dpls in the endpoint1 cluster should be removed
