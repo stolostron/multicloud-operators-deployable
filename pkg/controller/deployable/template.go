@@ -181,6 +181,7 @@ func (r *ReconcileDeployable) setLocalDeployable(cluster *client.ObjectKey, host
 		}
 
 		localdeployable.Spec.Template.Raw, err = json.Marshal(sub)
+
 		if err != nil {
 			klog.Info("Error in mashalling obj ", sub, err)
 		}
