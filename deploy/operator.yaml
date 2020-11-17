@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: multicloud-operators-deployable
+  name: multicluster-operators-deployable
   labels:
-    name: multicloud-operators-deployable
+    name: multicluster-operators-deployable
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: multicloud-operators-deployable
+      name: multicluster-operators-deployable
   template:
     metadata:
       labels:
-        name: multicloud-operators-deployable
+        name: multicluster-operators-deployable
     spec:
-      serviceAccountName: multicloud-operators
+      serviceAccountName: multicluster-operators
       containers:
-        - name: multicloud-operators-deployable
+        - name: multicluster-operators-deployable
           # Replace this with the built image name
-          image: quay.io/multicloudlab/multicloud-operators-deployable
+          image: quay.io/multiclusterlab/multicluster-operators-deployable
           command:
-          - multicloud-operators-deployable
+          - multicluster-operators-deployable
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -32,4 +32,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "multicloud-operators-deployable"
+              value: "multicluster-operators-deployable"

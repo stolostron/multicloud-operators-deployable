@@ -1,6 +1,6 @@
 # multicloud-operators-deployable
 
-[![Build](http://35.227.205.240/badge.svg?jobs=build_multicloud-operators-deployable)](http://35.227.205.240/badge.svg?jobs=build_multicloud-operators-deployable)
+[![Build](https://api.travis-ci.com/open-cluster-management/multicloud-operators-deployable.svg?branch=master)](https://api.travis-ci.com/open-cluster-management/multicloud-operators-deployable.svg?branch=master)
 [![GoDoc](https://godoc.org/github.com/open-cluster-management/multicloud-operators-deployable?status.svg)](https://godoc.org/github.com/open-cluster-management/multicloud-operators-deployable)
 [![Go Report Card](https://goreportcard.com/badge/github.com/open-cluster-management/multicloud-operators-deployable)](https://goreportcard.com/report/github.com/open-cluster-management/multicloud-operators-deployable)
 [![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_multicloud-operators-deployable&metric=coverage)](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_multicloud-operators-deployable&metric=coverage)
@@ -10,30 +10,25 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Top level title](#top-level-title)
-    - [What is the XXX](#what-is-the-xxx)
+- [multicloud-operators-deployable](#multicloud-operators-deployable)
+    - [What is the multicloud-operators-deployable](#what-is-the-multicloud-operators-deployable)
     - [Community, discussion, contribution, and support](#community-discussion-contribution-and-support)
     - [Getting Started](#getting-started)
         - [Prerequisites](#prerequisites)
-        - [XXXXX](#xxxxx)
-        - [Trouble shooting](#trouble-shooting)
-    - [XXX References](#xxx-references)
+        - [Deployment](#deployment)
+    - [Security Response](#security-response)
+    - [References](#references)
+        - [multicloud-operators repositories](#multicloud-operators-repositories)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Placement Rules for Multicloud Applications.
-
 ## What is the multicloud-operators-deployable
 
-It is Placement Rules for Multicloud Applications
+Deployable operator propagate the templating of resources to the target cluster namespace on hub, which will be subscribed later by the subscription operator on the target cluster.
 
 ## Community, discussion, contribution, and support
 
 Check the [CONTRIBUTING Doc](CONTRIBUTING.md) for how to contribute to the repo.
-
-You can reach the maintainers of this project at:
-
-- [#xxx on Slack] (link to maintainer in slack)
 
 ------
 
@@ -41,17 +36,23 @@ You can reach the maintainers of this project at:
 
 ### Prerequisites
 
-xxx...
+Check the [Development Doc](docs/development.md) for how to contribute to the repo.
 
-### XXXXX
+### Deployment
 
-xxx...
+Check the [Deployment Doc](docs/deployment.md) for how to deploy the operator.
 
-### Trouble shooting
+## Security Response
 
-Please refer to [Trouble shooting documentation](docs/trouble_shooting.md) for further info.
+Check the [Security Doc](SECURITY.md) if you've found a security issue.
 
-## XXX References
+## References
 
-If you have any further question about xxx, please refer to
-[XXX help documentation](docs/xxx_help.md) for further information.
+### multicloud-operators repositories
+
+- [multicloud-operators-application](https://github.com/open-cluster-management/multicloud-operators-application)
+- [multicloud-operators-channel](https://github.com/open-cluster-management/multicloud-operators-channel)
+- [multicloud-operators-deployable](https://github.com/open-cluster-management/multicloud-operators-deployable)
+- [multicloud-operators-placementrule](https://github.com/open-cluster-management/multicloud-operators-placementrule)
+- [multicloud-operators-subscription](https://github.com/open-cluster-management/multicloud-operators-subscription)
+- [multicloud-operators-subscription-release](https://github.com/open-cluster-management/multicloud-operators-subscription-release)
