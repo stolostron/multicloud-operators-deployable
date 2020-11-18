@@ -7,8 +7,6 @@ require (
 	github.com/onsi/gomega v1.9.0
 	github.com/open-cluster-management/api v0.0.0-20200610161514-939cead3902c
 	github.com/open-cluster-management/multicloud-operators-placementrule v0.0.0-20200624201731-5e0510647fa9
-	github.com/operator-framework/operator-sdk v0.18.0
-	github.com/prometheus/common v0.9.1
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
 	k8s.io/api v0.18.3
