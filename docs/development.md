@@ -15,7 +15,7 @@
 
 Multicloud-Operators projects are built with following tools. Use the links provided to install them on your environment:
 
- - Find and environment or set up Kubernetes version 1.13 and later: [kubernetes.io](https://kubernetes.io/docs/setup/#learning-environment) 
+ - Find an environment, or set up Kubernetes version 1.13 and later: [kubernetes.io](https://kubernetes.io/docs/setup/#learning-environment) 
 
  - Build with [Go verson 1.13 and later](https://golang.org/dl/)
 
