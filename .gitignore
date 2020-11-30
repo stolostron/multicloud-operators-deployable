@@ -5,6 +5,8 @@ build/_test
 OPENSOURCE.check
 .build-harness
 .build-harness-bootstrap
+build-harness-extensions
+build-harness
 
 # override build harness vendoring
 !vbh/.build-harness-vendorized
