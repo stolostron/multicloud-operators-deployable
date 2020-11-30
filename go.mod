@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/spec v0.19.4
 	github.com/onsi/gomega v1.10.1
 	github.com/open-cluster-management/api v0.0.0-20201007180356-41d07eee4294
-	github.com/open-cluster-management/multicloud-operators-placementrule v1.0.1-2020-06-08-14-28-27.0.20201118195339-05a8c4c89c12
+	github.com/open-cluster-management/multicloud-operators-placementrule v1.2.2-2-20201130-98cfd
 	github.com/spf13/pflag v1.0.5
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
