@@ -1,4 +1,4 @@
-# Deployment Guide
+# Deployment guide
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -26,7 +26,7 @@ kubectl apply -f deploy
 
 ## General process
 
-Deployable CR:
+See the following deployable CR sample:
 
 ```yaml
 apiVersion: apps.open-cluster-management.io/v1

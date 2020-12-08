@@ -3,11 +3,11 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Contributing guidelines](#contributing-guidelines)
-    - [Sign the CLA](#sign-the-cla)
-    - [Contributing A Patch](#contributing-a-patch)
-    - [Issue and Pull Request Management](#issue-and-pull-request-management)
+    - [Certificate of Origin](#certificate-of-origin)
+    - [Contributing a patch](#contributing-a-patch)
+    - [Issue and pull request management](#issue-and-pull-request-management)
     - [Pre-check before submitting a PR](#pre-check-before-submitting-a-pr)
-    - [Build and push images](#build-and-push-images)
+    - [Build images](#build-images)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -15,17 +15,17 @@
 
 ## Developer Certificate of Origin
 
-This repository built with [probot](https://github.com/probot/probot) that enforces the [Developer Certificate of Origin](https://developercertificate.org/) (DCO) on Pull Requests. It requires all commit messages to contain the `Signed-off-by` line with an email address that matches the commit author.
+This repository built with [probot](https://github.com/probot/probot) that enforces the [Developer Certificate of Origin](https://developercertificate.org/) (DCO) on pull requests. It requires all commit messages to contain the `Signed-off-by` line with an email address that matches the commit author.
 
-## Contributing A Patch
+## Contributing a patch
 
 1. Submit an issue describing your proposed change to the repo in question.
 1. The [repo owners](OWNERS) will respond to your issue promptly.
-1. Fork the desired repo, develop and test your code changes.
+1. Fork the desired repo, develop, and test your code changes.
 1. Commit your changes with DCO
 1. Submit a pull request.
 
-## Issue and Pull Request Management
+## Issue and pull request management
 
 Anyone may comment on issues and submit reviews for pull requests.
 
@@ -43,11 +43,11 @@ make test
 
 ## Build images
 
-Make sure your code build passed, run following commands to build image locally
+Make sure your code build passed. Run the following commands to build images locally:
 
 ```shell
 export BUILD_LOCALLY=1
 make
 ```
 
-Now, you can follow the [getting started guide](./README.md#getting-started) to work with the xxx.
+Now, you can follow the [Getting started guide](./README.md#getting-started) to work with the repository.
