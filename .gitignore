@@ -1,12 +1,12 @@
 # Temporary Build Files
 build/_output
 build/_test
+build-harness-extensions
+build-harness
 
 OPENSOURCE.check
 .build-harness
 .build-harness-bootstrap
-build-harness-extensions
-build-harness
 
 # override build harness vendoring
 !vbh/.build-harness-vendorized
