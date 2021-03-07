@@ -12,48 +12,32 @@
 
 - [multicloud-operators-deployable](#multicloud-operators-deployable)
     - [What is the multicloud-operators-deployable](#what-is-the-multicloud-operators-deployable)
-    - [Community, discussion, contribution, and support](#community-discussion-contribution-and-support)
     - [Getting Started](#getting-started)
-        - [Prerequisites](#prerequisites)
-        - [Deployment](#deployment)
-    - [Security Response](#security-response)
     - [References](#references)
-        - [multicloud-operators repositories](#multicloud-operators-repositories)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## What is the multicloud-operators-deployable
+## What is the multicloud-operators-deployable?
 
-Deployable operator propagate the templating of resources to the target cluster namespace on hub, which will be subscribed later by the subscription operator on the target cluster.
+The `multicloud-operators-deployable` is the operator that propagates the templating of resources to the target cluster namespace on hub, which will be subscribed later by the subscription operator on the target cluster.
 
-## Community, discussion, contribution, and support
+Go to the [Contributing guide](CONTRIBUTING.md) to learn how to get involved.
 
-Check the [CONTRIBUTING Doc](CONTRIBUTING.md) for how to contribute to the repo.
+## Getting started
 
-------
+- Clone and build an image with the [Development guide](docs/development.md).
 
-## Getting Started
+- View the [Deployment guide](docs/deployment.md) to learn how to deploy the operator.
 
-### Prerequisites
-
-Check the [Development Doc](docs/development.md) for how to contribute to the repo.
-
-### Deployment
-
-Check the [Deployment Doc](docs/deployment.md) for how to deploy the operator.
-
-## Security Response
-
-Check the [Security Doc](SECURITY.md) if you've found a security issue.
+- Check the [Security guide](SECURITY.md) if you need to report a security issue.
 
 ## References
 
-### multicloud-operators repositories
+- Access the following multicloud-operators repositories:
 
-- [multicloud-operators-application](https://github.com/open-cluster-management/multicloud-operators-application)
-- [multicloud-operators-channel](https://github.com/open-cluster-management/multicloud-operators-channel)
-- [multicloud-operators-deployable](https://github.com/open-cluster-management/multicloud-operators-deployable)
-- [multicloud-operators-placementrule](https://github.com/open-cluster-management/multicloud-operators-placementrule)
-- [multicloud-operators-subscription](https://github.com/open-cluster-management/multicloud-operators-subscription)
-- [multicloud-operators-subscription-release](https://github.com/open-cluster-management/multicloud-operators-subscription-release)
-
+    - [multicloud-operators-application](https://github.com/open-cluster-management/multicloud-operators-application)
+    - [multicloud-operators-channel](https://github.com/open-cluster-management/multicloud-operators-channel)
+    - [multicloud-operators-deployable](https://github.com/open-cluster-management/multicloud-operators-deployable)
+    - [multicloud-operators-placementrule](https://github.com/open-cluster-management/multicloud-operators-placementrule)
+    - [multicloud-operators-subscription](https://github.com/open-cluster-management/multicloud-operators-subscription)
+    - [multicloud-operators-subscription-release](https://github.com/open-cluster-management/multicloud-operators-subscription-release)
