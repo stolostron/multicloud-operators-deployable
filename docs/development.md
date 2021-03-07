@@ -1,23 +1,23 @@
-# Development Guide
+# Development guide
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Development Guide](#development-guide)
-    - [Required tools/Binaries](#required-tools/binaries)
-    - [Launch Dev mode](#launch-dev-mode)
+- [Development guide](#development-guide)
+    - [Required tools and binaries](#required-tools/binaries)
+    - [Launch dev mode](#launch-dev-mode)
     - [Build a local image](#build-a-local-image)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Required tools/Binaries
+## Required tools and binaries
 
-Multicloud-Operators projects are built with following tools. Use the links provided to install them on your environment:
+The Multicloud-Operators projects are built with following tools. Use the links provided to install them on your environment:
 
- - Find an environment, or set up Kubernetes version 1.13 and later: [kubernetes.io](https://kubernetes.io/docs/setup/#learning-environment) 
+ - Find an environment, or set up Kubernetes version 1.13 and later: [kubernetes.io](https://kubernetes.io/docs/setup/#learning-environment).
 
- - Build with [Go verson 1.13 and later](https://golang.org/dl/)
+ - Build with [Go verson 1.13 and later](https://golang.org/dl/).
 
  - Enforce style and formatting with Lint:
 
@@ -36,7 +36,7 @@ Multicloud-Operators projects are built with following tools. Use the links prov
 
  - Test with [kubebuilder v1.0.8](https://github.com/kubernetes-sigs/kubebuilder/releases/tag/v1.0.8)
 
-## Launch Dev mode
+## Launch dev mode
 
 Run the following command to launch developer mode:
 
