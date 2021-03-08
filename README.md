@@ -1,6 +1,6 @@
 # multicloud-operators-deployable
 
-[![Build](https://api.travis-ci.com/open-cluster-management/multicloud-operators-deployable.svg?branch=master)](https://api.travis-ci.com/open-cluster-management/multicloud-operators-deployable.svg?branch=master)
+[![Build](https://api.travis-ci.com/open-cluster-management/multicloud-operators-deployable.svg?branch=main)](https://api.travis-ci.com/open-cluster-management/multicloud-operators-deployable.svg?branch=main)
 [![GoDoc](https://godoc.org/github.com/open-cluster-management/multicloud-operators-deployable?status.svg)](https://godoc.org/github.com/open-cluster-management/multicloud-operators-deployable)
 [![Go Report Card](https://goreportcard.com/badge/github.com/open-cluster-management/multicloud-operators-deployable)](https://goreportcard.com/report/github.com/open-cluster-management/multicloud-operators-deployable)
 [![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_multicloud-operators-deployable&metric=coverage)](https://sonarcloud.io/api/project_badges/measure?project=open-cluster-management_multicloud-operators-deployable&metric=coverage)
