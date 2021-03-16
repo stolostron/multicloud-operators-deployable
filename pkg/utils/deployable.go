@@ -338,15 +338,17 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 	dpl := &appv1alpha1.Deployable{}
 	host := GetHostDeployableFromObject(tplunit)
 
+	var err error
+
 	if host == nil {
 		klog.Info("Failed to find hosting deployable for ", tplunit)
-	}
+	} else {
+		err = statusClient.Get(context.TODO(), *host, dpl)
 
-	err := statusClient.Get(context.TODO(), *host, dpl)
-
-	if err != nil {
-		// for all errors including not found return
-		return err
+		if err != nil {
+			// for all errors including not found return
+			return err
+		}
 	}
 
 	klog.V(10).Info("Trying to update deployable status:", host, templateerr)

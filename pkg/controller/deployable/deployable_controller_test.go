@@ -241,7 +241,6 @@ func TestPropagate(t *testing.T) {
 		err = json.Unmarshal(dpllist.Items[0].Spec.Template.Raw, sub)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 		g.Expect(sub.GetName()).To(gomega.Equal("payload-local"))
-
 	}
 
 	dpllist2 := &appv1alpha1.DeployableList{}
