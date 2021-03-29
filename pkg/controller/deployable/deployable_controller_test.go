@@ -372,7 +372,7 @@ func TestOverride(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	if len(dpllist.Items) != 3 {
-		t.Errorf("Failed to propagate to cluster endpoints. items: %v", dpllist)
+		t.Errorf("Failed to propagate to cluster endpoints. dpl items should be 3")
 	}
 
 	for _, dpl := range dpllist.Items {
@@ -385,7 +385,8 @@ func TestOverride(t *testing.T) {
 		if dpl.GetGenerateName() != expgenname {
 			t.Errorf("Incorrect generate name of generated deployable. \n\texpect:\t%s\n\tgot:\t%s", expgenname, dpl.GetGenerateName())
 		}
-		//verify override
+
+		// verify override
 		if dpl.Namespace == "endpoint1-ns" {
 			template := &unstructured.Unstructured{}
 

@@ -58,5 +58,6 @@ lint-go:
 
 .PHONY: test
 
-test: 
+test:
+	@build/setup-tests.sh
 	@build/run-unit-tests.sh
