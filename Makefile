@@ -105,7 +105,7 @@ lint: lint-all
 ############################################################
 
 test:
-	@go test ${TESTARGS} ./...
+	@go test ${TESTARGS} -coverprofile=coverage.out ./...
 
 ############################################################
 # coverage section
