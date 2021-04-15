@@ -24,7 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,10 +41,6 @@ var d *appv1alpha1.Deployable
 var (
 	dplname = "example-configmap"
 	dplns   = "default"
-	dplkey  = types.NamespacedName{
-		Name:      dplname,
-		Namespace: dplns,
-	}
 )
 
 var (
@@ -91,6 +86,7 @@ func SetupTestDeployable() (*appv1alpha1.Deployable, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	c = mgr.GetClient()
 
 	instance := &appv1alpha1.Deployable{

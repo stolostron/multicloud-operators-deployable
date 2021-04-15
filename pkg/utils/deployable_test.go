@@ -19,13 +19,12 @@ import (
 
 	"github.com/onsi/gomega"
 	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
-	v1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
 var (
-	oldDeployable = &v1.Deployable{
+	oldDeployable = &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployable",
 			APIVersion: "apps.open-cluster-management.io/v1",
@@ -38,7 +37,7 @@ var (
 		},
 	}
 
-	newDeployable = &v1.Deployable{
+	newDeployable = &appv1alpha1.Deployable{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployable",
 			APIVersion: "apps.open-cluster-management.io/v1",
@@ -66,7 +65,6 @@ func TestDeployablePredicate(t *testing.T) {
 	}
 	ret := instance.Update(updateEvt)
 	g.Expect(ret).To(gomega.Equal(true))
-
 }
 
 func TestCompareDeployable(t *testing.T) {
@@ -131,7 +129,7 @@ func TestGetUnstructuredTemplateFromDeployable(t *testing.T) {
 	g.Expect(tpl).NotTo(gomega.BeNil())
 
 	newDepl.Spec.Template = nil
-	tpl, er = GetUnstructuredTemplateFromDeployable(newDepl)
+	_, er = GetUnstructuredTemplateFromDeployable(newDepl)
 	g.Expect(er).To(gomega.HaveOccurred())
 }
 
