@@ -1,6 +1,6 @@
 module github.com/open-cluster-management/multicloud-operators-deployable
 
-go 1.15
+go 1.16
 
 require (
 	github.com/cameront/go-jsonpatch v0.0.0-20180223123257-a8710867776e
