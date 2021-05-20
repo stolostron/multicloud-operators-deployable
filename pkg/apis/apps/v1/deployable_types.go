@@ -142,7 +142,7 @@ type Deployable struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DeployableSpec   `json:"spec,omitempty"`
+	Spec   DeployableSpec   `json:"spec"`
 	Status DeployableStatus `json:"status,omitempty"`
 }
 
