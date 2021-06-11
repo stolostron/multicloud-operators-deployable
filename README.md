@@ -24,7 +24,7 @@
 
 ## What is the multicloud-operators-deployable
 
-Deployable operator propagate the templating of resources to the target cluster namespace on the hub, which will be subscribed later by the subscription operator on the target cluster. 
+Deployable operator propagates the templating of resources to the target cluster namespace on the hub, which will be subscribed later by the subscription operator on the target cluster. 
 
 ## Community, discussion, contribution, and support
 
