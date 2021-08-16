@@ -59,9 +59,7 @@ func TestDeployablePredicate(t *testing.T) {
 
 	updateEvt := event.UpdateEvent{
 		ObjectOld: oldDeployable,
-		MetaOld:   oldDeployable.GetObjectMeta(),
 		ObjectNew: newDeployable,
-		MetaNew:   newDeployable.GetObjectMeta(),
 	}
 	ret := instance.Update(updateEvt)
 	g.Expect(ret).To(gomega.Equal(true))
