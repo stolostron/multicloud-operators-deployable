@@ -6,7 +6,7 @@
 #   $3 - image-to-alias dictionary (image-alias.json, should exist)
 #
 # Required environment variables:
-#   $QUAY_TOKEN - you know, the token... to quay (needs to be able to read open-cluster-management stuffs
+#   $QUAY_TOKEN - you know, the token... to quay (needs to be able to read stolostron stuffs
 #
 
 if [[ -z "$QUAY_TOKEN" ]]
