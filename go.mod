@@ -1,4 +1,4 @@
-module github.com/open-cluster-management/multicloud-operators-deployable
+module github.com/stolostron/multicloud-operators-deployable
 
 go 1.17
 
@@ -8,8 +8,8 @@ require (
 	github.com/go-openapi/spec v0.19.5
 	github.com/onsi/gomega v1.13.0
 	github.com/open-cluster-management/api v0.0.0-20210513122330-d76f10481f05
-	github.com/open-cluster-management/multicloud-operators-placementrule v1.2.4-0-20210816-699e5
 	github.com/spf13/pflag v1.0.5
+	github.com/stolostron/multicloud-operators-placementrule v1.2.4-0-20220112-8eedb3f
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	k8s.io/api v0.21.3
@@ -72,4 +72,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.21.3
+replace (
+	github.com/open-cluster-management/api => open-cluster-management.io/api v0.0.0-20210513122330-d76f10481f05
+	k8s.io/client-go => k8s.io/client-go v0.21.3
+)
