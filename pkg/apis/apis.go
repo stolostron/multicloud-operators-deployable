@@ -15,11 +15,11 @@
 package apis
 
 import (
-	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
+	spokeClusterV1 "github.com/stolostron/api/cluster/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog"
 
-	placementruleapis "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis"
+	placementruleapis "github.com/stolostron/multicloud-operators-placementrule/pkg/apis"
 )
 
 // AddToSchemes may be used to add all resources defined in the project to a Scheme

@@ -25,9 +25,9 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
-	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
+	spokeClusterV1 "github.com/stolostron/api/cluster/v1"
+	appv1alpha1 "github.com/stolostron/multicloud-operators-deployable/pkg/apis/apps/v1"
+	"github.com/stolostron/multicloud-operators-deployable/pkg/utils"
 )
 
 func (r *ReconcileDeployable) propagateDeployables(clusters []types.NamespacedName, instance *appv1alpha1.Deployable,
