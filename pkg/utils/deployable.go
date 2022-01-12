@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
+	appv1alpha1 "github.com/stolostron/multicloud-operators-deployable/pkg/apis/apps/v1"
 )
 
 // DeployablePredicateFunc defines predicate function for deployable watch in deployable controller
@@ -342,7 +342,12 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 		klog.Info("Failed to find hosting deployable for ", tplunit)
 	}
 
-	err := statusClient.Get(context.TODO(), *host, dpl)
+	var err error
+	if host == nil {
+		klog.Info("Failed to find hosting deployable for ", tplunit)
+	} else {
+		err = statusClient.Get(context.TODO(), *host, dpl)
+	}
 
 	if err != nil {
 		// for all errors including not found return

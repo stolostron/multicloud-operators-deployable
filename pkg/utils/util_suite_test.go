@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis"
+	"github.com/stolostron/multicloud-operators-deployable/pkg/apis"
 )
 
 var cfg *rest.Config

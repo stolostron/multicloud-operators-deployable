@@ -31,8 +31,10 @@ linters:
     - dupl
     - gochecknoglobals
     - gochecknoinits
+    - gocognit
     - goconst
     - gocyclo
+    - gomnd
     - gosec
     - nakedret
     - prealloc
