@@ -15,7 +15,7 @@
 package apis
 
 import (
-	spokeClusterV1 "github.com/stolostron/api/cluster/v1"
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog"
 

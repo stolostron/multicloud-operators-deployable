@@ -18,7 +18,7 @@ import (
 	"context"
 	"reflect"
 
-	spokeClusterV1 "github.com/stolostron/api/cluster/v1"
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

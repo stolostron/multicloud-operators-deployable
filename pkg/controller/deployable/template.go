@@ -25,7 +25,7 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	spokeClusterV1 "github.com/stolostron/api/cluster/v1"
+	spokeClusterV1 "github.com/open-cluster-management/api/cluster/v1"
 	appv1alpha1 "github.com/stolostron/multicloud-operators-deployable/pkg/apis/apps/v1"
 	"github.com/stolostron/multicloud-operators-deployable/pkg/utils"
 )
