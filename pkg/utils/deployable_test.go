@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
+	appv1alpha1 "github.com/stolostron/multicloud-operators-deployable/pkg/apis/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )

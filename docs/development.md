@@ -41,7 +41,7 @@ Multicloud-Operators projects are built with following tools. Use the links prov
 Run the following command to launch developer mode:
 
 ```shell
-git clone git@github.com:open-cluster-management/multicloud-operators-deployable.git
+git clone git@github.com:stolostron/multicloud-operators-deployable.git
 cd multicloud-operators-deployable
 export GITHUB_USER=<github_user>
 export GITHUB_TOKEN=<github_token>
@@ -55,7 +55,7 @@ make build
 Build a local image by running the following command:
 
 ```shell
-git clone git@github.com:open-cluster-management/multicloud-operators-deployable.git
+git clone git@github.com:stolostron/multicloud-operators-deployable.git
 cd multicloud-operators-deployable
 export GITHUB_USER=<github_user>
 export GITHUB_TOKEN=<github_token>
