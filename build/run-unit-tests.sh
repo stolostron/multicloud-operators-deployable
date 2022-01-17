@@ -16,4 +16,4 @@ export PATH=$PATH:/usr/local/kubebuilder/bin
 
 # Run unit test
 export IMAGE_NAME_AND_VERSION=${1}
-make test
+make -f Makefile.prow test

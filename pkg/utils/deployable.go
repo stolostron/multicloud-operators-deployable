@@ -343,6 +343,7 @@ func UpdateDeployableStatus(statusClient client.Client, templateerr error, tplun
 	}
 
 	var err error
+
 	if host == nil {
 		klog.Info("Failed to find hosting deployable for ", tplunit)
 	} else {

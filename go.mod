@@ -11,7 +11,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stolostron/multicloud-operators-placementrule v1.2.2-0-20220115-4218674
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	k8s.io/api v0.20.0
 	k8s.io/apiextensions-apiserver v0.19.3
 	k8s.io/apimachinery v0.20.0
@@ -21,9 +21,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 
-require (
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-)
+require golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 
 replace (
 	github.com/open-cluster-management/api => open-cluster-management.io/api v0.0.0-20210513122330-d76f10481f05
