@@ -21,6 +21,10 @@ require (
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 
+require (
+	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+)
+
 replace (
 	github.com/open-cluster-management/api => open-cluster-management.io/api v0.0.0-20210513122330-d76f10481f05
 	k8s.io/api => k8s.io/api v0.19.3
