@@ -5,10 +5,10 @@
 #   $2 - snapshot date (just the date part)
 #
 # Required environment variables:
-#   $QUAY_TOKEN - you know, the token... to quay (needs to be able to read open-cluster-management stuffs
+#   $QUAY_TOKEN - you know, the token... to quay (needs to be able to read stolostron stuffs
 #
 
-quay_org=open-cluster-management
+quay_org=stolostron
 
 SNAPSHOT=$2
 if [[ -z "$GITHUB_TOKEN" ]]
