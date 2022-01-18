@@ -35,9 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	appv1alpha1 "github.com/open-cluster-management/multicloud-operators-deployable/pkg/apis/apps/v1"
-	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/utils"
-	placementrulev1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/apps/v1"
+	appv1alpha1 "github.com/stolostron/multicloud-operators-deployable/pkg/apis/apps/v1"
+	"github.com/stolostron/multicloud-operators-deployable/pkg/utils"
+	placementrulev1alpha1 "github.com/stolostron/multicloud-operators-placementrule/pkg/apis/apps/v1"
 )
 
 var c client.Client
@@ -241,7 +241,6 @@ func TestPropagate(t *testing.T) {
 		err = json.Unmarshal(dpllist.Items[0].Spec.Template.Raw, sub)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 		g.Expect(sub.GetName()).To(gomega.Equal("payload-local"))
-
 	}
 
 	dpllist2 := &appv1alpha1.DeployableList{}

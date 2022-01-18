@@ -15,7 +15,7 @@
 package controller
 
 import (
-	"github.com/open-cluster-management/multicloud-operators-deployable/pkg/controller/deployable"
+	"github.com/stolostron/multicloud-operators-deployable/pkg/controller/deployable"
 )
 
 func init() {
