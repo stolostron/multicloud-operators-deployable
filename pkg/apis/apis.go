@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog"
 
-	placementruleapis "github.com/stolostron/multicloud-operators-placementrule/pkg/apis"
+	placementruleapis "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis"
 )
 
 // AddToSchemes may be used to add all resources defined in the project to a Scheme
