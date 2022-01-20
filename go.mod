@@ -8,8 +8,8 @@ require (
 	github.com/go-openapi/spec v0.19.5
 	github.com/onsi/gomega v1.13.0
 	github.com/open-cluster-management/api v0.0.0-20210513122330-d76f10481f05
+	github.com/open-cluster-management/multicloud-operators-placementrule v1.2.4-0-20210816-699e5
 	github.com/spf13/pflag v1.0.5
-	github.com/stolostron/multicloud-operators-placementrule v1.2.4-0-20220112-8eedb3f
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	k8s.io/api v0.21.3
@@ -53,7 +53,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
@@ -74,5 +74,6 @@ require (
 
 replace (
 	github.com/open-cluster-management/api => open-cluster-management.io/api v0.0.0-20210513122330-d76f10481f05
+	github.com/open-cluster-management/multicloud-operators-placementrule => github.com/stolostron/multicloud-operators-placementrule v1.2.4-0-20210816-699e5
 	k8s.io/client-go => k8s.io/client-go v0.21.3
 )
