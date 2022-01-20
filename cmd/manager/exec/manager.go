@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/open-cluster-management/multicloud-operators-placementrule/pkg/utils"
 	"github.com/stolostron/multicloud-operators-deployable/pkg/apis"
 	"github.com/stolostron/multicloud-operators-deployable/pkg/controller"
-	"github.com/stolostron/multicloud-operators-placementrule/pkg/utils"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/klog"
