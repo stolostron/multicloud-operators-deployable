@@ -22,10 +22,10 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	placementv1alpha1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/apps/v1"
-	placementutils "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/utils"
 	appv1alpha1 "github.com/stolostron/multicloud-operators-deployable/pkg/apis/apps/v1"
 	"github.com/stolostron/multicloud-operators-deployable/pkg/utils"
+	placementv1alpha1 "github.com/stolostron/multicloud-operators-placementrule/pkg/apis/apps/v1"
+	placementutils "github.com/stolostron/multicloud-operators-placementrule/pkg/utils"
 )
 
 // Top priority: placementRef, ignore others
@@ -49,7 +49,7 @@ func (r *ReconcileDeployable) getClustersByPlacement(instance *appv1alpha1.Deplo
 	if instance.Spec.Placement.PlacementRef != nil {
 		clusters, err = r.getClustersFromPlacementRef(instance)
 	} else {
-		clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, instance.Spec.Placement.GenericPlacementFields, r.authClient, instance)
+		clustermap, err := placementutils.PlaceByGenericPlacmentFields(r.Client, instance.Spec.Placement.GenericPlacementFields, instance)
 		if err != nil {
 			klog.Error("Failed to get clusters from generic fields with error: ", err)
 			return nil, err
